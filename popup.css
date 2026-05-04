@@ -1,0 +1,116 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 280px;
+  background: #0f172a;
+  color: #f3f4f6;
+  font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #1f2937;
+}
+.head__icon {
+  border-radius: 8px;
+}
+.head__name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.head__sub {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+.row__label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.row__hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.switch__track {
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  background: #374151;
+  border-radius: 999px;
+  transition: background 0.16s ease;
+  position: relative;
+}
+.switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.16s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.switch input:checked + .switch__track {
+  background: #16a34a;
+}
+.switch input:checked + .switch__track .switch__thumb {
+  transform: translateX(16px);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 12px;
+  border-top: 1px solid #1f2937;
+  font-size: 11px;
+  color: #9ca3af;
+}
+.foot__version {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.foot__links {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.foot__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #d1d5db;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.foot__link:hover {
+  background: #1f2937;
+  color: #fff;
+}

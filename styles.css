@@ -1,0 +1,181 @@
+.upeg-lens-badge {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 10;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #16a34a;
+  color: #fff;
+  font: 700 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+.upeg-lens-badge:hover {
+  background: #15803d;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.upeg-lens-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  animation: upeg-lens-fade 0.12s ease-out;
+}
+@keyframes upeg-lens-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.upeg-lens-modal {
+  position: relative;
+  background: #0f172a;
+  color: #f3f4f6;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 24px 26px 18px;
+  width: min(420px, 92vw);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.upeg-lens-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: transparent;
+  border: 0;
+  color: #9ca3af;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.upeg-lens-close:hover { color: #fff; }
+
+.upeg-lens-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.upeg-lens-bundle {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.upeg-lens-price {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 6px 0 14px;
+  letter-spacing: -0.02em;
+}
+.upeg-lens-price span {
+  font-size: 14px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.upeg-lens-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid #1f2937;
+  font-size: 13px;
+}
+.upeg-lens-row-wrap {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.upeg-lens-row-wrap code {
+  word-break: break-all;
+  font-size: 11px;
+}
+.upeg-lens-row span { color: #9ca3af; }
+.upeg-lens-row b { color: #fff; font-weight: 600; }
+.upeg-lens-row code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.upeg-lens-buy {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  background: #f3f4f6;
+  color: #0f172a;
+  padding: 11px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  transition: background 0.12s ease;
+}
+.upeg-lens-buy:hover { background: #fff; }
+
+/* Filter toggle chip */
+.upeg-lens-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483646;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 10px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font: 600 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transition: background 0.12s ease, transform 0.08s ease;
+  user-select: none;
+}
+.upeg-lens-toggle:hover { transform: translateY(-1px); }
+.upeg-lens-toggle__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6b7280;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+.upeg-lens-toggle__count {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+.upeg-lens-toggle--on {
+  background: #16a34a;
+  color: #fff;
+}
+.upeg-lens-toggle--on .upeg-lens-toggle__dot {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+.upeg-lens-toggle--on .upeg-lens-toggle__count {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Hide non-listed cards when filter is on. Unscanned cards remain visible
+   so infinite-scroll additions don't flicker before they're processed. */
+body.upeg-lens-filtered .upeg-card.upeg-lens-no-listing {
+  display: none !important;
+}
