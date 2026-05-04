@@ -1,3 +1,5 @@
+<img width="1326" height="1308" alt="image" src="https://github.com/user-attachments/assets/5a950c05-d1bc-4667-8bcd-5ce532aabefd" />
+
 # uPEG OTC Lens
 
 A Chrome extension that brings [p2peg.app](https://p2peg.app/collections/unipeg) OTC market data into the [unipeg.art](https://unipeg.art/explore) gallery — letting you browse, filter, and discover listings directly while exploring the artwork.
