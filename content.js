@@ -89,23 +89,28 @@
       seen.set(card, id);
       todo.push({ card, id });
     }
-    if (!todo.length) return;
-    const map = await lookup(todo.map((t) => t.id));
     let painted = 0;
-    for (const { card, id } of todo) {
-      const l = map[id];
-      if (l) {
-        paintBadge(card, l);
-        painted++;
-      } else {
-        card.classList.add('upeg-lens-no-listing');
+    if (todo.length) {
+      const map = await lookup(todo.map((t) => t.id));
+      for (const { card, id } of todo) {
+        const l = map[id];
+        if (l) {
+          paintBadge(card, l);
+          painted++;
+        } else {
+          card.classList.add('upeg-lens-no-listing');
+        }
       }
     }
-    listedCount += painted;
+    listedCount = document.querySelectorAll(
+      '.upeg-card.upeg-lens-has-listing'
+    ).length;
     updateToggleLabel();
-    console.log(
-      `[uPEG Lens] scan: ${todo.length} new card${todo.length === 1 ? '' : 's'}, ${painted} listed on p2peg`
-    );
+    if (todo.length) {
+      console.log(
+        `[uPEG Lens] scan: ${todo.length} new card${todo.length === 1 ? '' : 's'}, ${painted} listed on p2peg`
+      );
+    }
   }
 
   function escapeHtml(s) {
