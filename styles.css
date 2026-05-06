@@ -230,11 +230,37 @@
 }
 .upeg-lens-popover__row:hover { background: rgba(255, 255, 255, 0.05); }
 .upeg-lens-popover__row input {
-  accent-color: #16a34a;
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  cursor: pointer;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.upeg-lens-popover__check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid #4b5563;
+  background: transparent;
+  position: relative;
+  flex: none;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  box-sizing: border-box;
+}
+.upeg-lens-popover__row input:checked ~ .upeg-lens-popover__check {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+.upeg-lens-popover__row input:checked ~ .upeg-lens-popover__check::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
 }
 .upeg-lens-popover__name {
   flex: 1;
@@ -274,6 +300,12 @@ body.upeg-lens-hide-opensea .upeg-card.upeg-lens-source-opensea .upeg-lens-badge
 }
 body.upeg-lens-filtered .upeg-card.upeg-lens-no-listing {
   display: none !important;
+}
+
+/* When filtering, force any grid container of .upeg-card to repack so
+   hidden cards don't leave gaps in fixed-position grid layouts. */
+body.upeg-lens-filtered :has(> .upeg-card) {
+  grid-auto-flow: dense !important;
 }
 body.upeg-lens-filtered.upeg-lens-hide-p2peg .upeg-card.upeg-lens-source-p2peg {
   display: none !important;

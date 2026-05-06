@@ -82,6 +82,24 @@ The key is stored only in your browser via `chrome.storage.local`. It is never s
 
 No accounts, no tracking, no remote code — everything runs locally in your browser.
 
+## Changelog
+
+Only the three most recent versions are kept here. See [GitHub commits](https://github.com/sonyschan/unipeglens/commits/main) for full history.
+
+### v1.1.1
+- Replaced native popover checkboxes with custom-styled boxes so they're always visible regardless of host-page CSS resets.
+- Forced `grid-auto-flow: dense` on the gallery grid when "Listings only" is on, so filtered cards repack instead of leaving empty cells.
+
+### v1.1.0
+- Added OpenSea as a second listing source. Listings from `unipegv4` are merged into the same index as p2peg, keyed by display ID.
+- Per-source price badges: **pink** for p2peg, **blue** for OpenSea. Modal "Buy" deep-links to the matching marketplace.
+- Floating chip became a popover with independent source toggles plus the existing "Listings only" filter.
+- Popup gained an optional **OpenSea API key** field; without one, the extension auto-mints and rotates a free agent-tier key.
+
+### v1.0.0
+- Initial release. Pulls open ETH listings from `server.p2peg.app`, paints a price badge on each matching `.upeg-card` in `unipeg.art/explore`, and opens a details modal with a deep link to the trade page.
+- Filter chip to show "Listings only" and a toolbar popup with enable/disable switch.
+
 ## Contact
 
 Built by [@h2crypto_eth](https://x.com/h2crypto_eth) — feedback, bug reports, and feature requests welcome on X or via [GitHub Issues](https://github.com/sonyschan/unipeglens/issues).

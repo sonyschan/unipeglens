@@ -252,6 +252,7 @@
       <div class="upeg-lens-popover__title">Sources</div>
       <label class="upeg-lens-popover__row">
         <input type="checkbox" data-pref="p2peg" />
+        <span class="upeg-lens-popover__check"></span>
         <span class="upeg-lens-popover__name">
           <span class="upeg-lens-popover__dot upeg-lens-popover__dot--p2peg"></span>
           p2peg
@@ -260,6 +261,7 @@
       </label>
       <label class="upeg-lens-popover__row">
         <input type="checkbox" data-pref="opensea" />
+        <span class="upeg-lens-popover__check"></span>
         <span class="upeg-lens-popover__name">
           <span class="upeg-lens-popover__dot upeg-lens-popover__dot--opensea"></span>
           OpenSea
@@ -269,6 +271,7 @@
       <div class="upeg-lens-popover__divider"></div>
       <label class="upeg-lens-popover__row">
         <input type="checkbox" data-pref="filter" />
+        <span class="upeg-lens-popover__check"></span>
         <span class="upeg-lens-popover__name">Listings only</span>
       </label>
     `;
@@ -382,5 +385,5 @@
     subtree: true,
   });
 
-  console.log('[uPEG Lens] content script active (v1.1.0)');
+  console.log('[uPEG Lens] content script active (v1.1.1)');
 })();
