@@ -84,20 +84,17 @@ No accounts, no tracking, no remote code — everything runs locally in your bro
 
 ## Changelog
 
-Only the three most recent versions are kept here. See [GitHub commits](https://github.com/sonyschan/unipeglens/commits/main) for full history.
+Only the three most recent **major or minor** releases are kept here (patches omitted). See [GitHub commits](https://github.com/sonyschan/unipeglens/commits/main) for full history.
 
-### v1.1.2
-- Fixed empty grid cells in "Listings only" mode. unipeg.art wraps every card in a `.upeg-card-wrap` grid cell, so hiding the inner card alone left the cell empty. Now the wrap itself is hidden via `:has()`, and remaining cards pack tightly.
-
-### v1.1.1
-- Replaced native popover checkboxes with custom-styled boxes so they're always visible regardless of host-page CSS resets.
-- Forced `grid-auto-flow: dense` on the gallery grid when "Listings only" is on, so filtered cards repack instead of leaving empty cells.
-
-### v1.1.0
+### v1.1
 - Added OpenSea as a second listing source. Listings from `unipegv4` are merged into the same index as p2peg, keyed by display ID.
 - Per-source price badges: **pink** for p2peg, **blue** for OpenSea. Modal "Buy" deep-links to the matching marketplace.
 - Floating chip became a popover with independent source toggles plus the existing "Listings only" filter.
 - Popup gained an optional **OpenSea API key** field; without one, the extension auto-mints and rotates a free agent-tier key.
+
+### v1.0
+- Initial release. Pulls open ETH listings from `server.p2peg.app`, paints a price badge on each matching `.upeg-card` in `unipeg.art/explore`, and opens a details modal with a deep link to the trade page.
+- Filter chip to show "Listings only" and a toolbar popup with enable/disable switch.
 
 ## Contact
 
