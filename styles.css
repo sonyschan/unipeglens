@@ -1,3 +1,4 @@
+/* ---------- Per-card price badge ---------- */
 .upeg-lens-badge {
   position: absolute;
   top: 50%;
@@ -6,19 +7,27 @@
   z-index: 10;
   padding: 3px 8px;
   border-radius: 4px;
-  background: #16a34a;
-  color: #fff;
   font: 700 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.02em;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.08s ease, background 0.12s ease;
+  transition: transform 0.08s ease, filter 0.12s ease;
 }
 .upeg-lens-badge:hover {
-  background: #15803d;
+  filter: brightness(1.08);
   transform: translateY(-50%) scale(1.05);
 }
 
+.upeg-lens-badge--p2peg {
+  background: #C061AE;
+  color: #000;
+}
+.upeg-lens-badge--opensea {
+  background: #0086FF;
+  color: #fff;
+}
+
+/* ---------- Modal ---------- */
 .upeg-lens-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -58,6 +67,19 @@
   padding: 4px 8px;
 }
 .upeg-lens-close:hover { color: #fff; }
+
+.upeg-lens-source-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+.upeg-lens-source-tag--p2peg { background: #C061AE; color: #000; }
+.upeg-lens-source-tag--opensea { background: #0086FF; color: #fff; }
 
 .upeg-lens-title {
   font-size: 18px;
@@ -113,19 +135,19 @@
   display: block;
   text-align: center;
   margin-top: 16px;
-  background: #f3f4f6;
-  color: #0f172a;
   padding: 11px;
   border-radius: 10px;
   text-decoration: none;
   font-weight: 700;
   font-size: 14px;
-  transition: background 0.12s ease;
+  transition: filter 0.12s ease;
 }
-.upeg-lens-buy:hover { background: #fff; }
+.upeg-lens-buy:hover { filter: brightness(1.08); }
+.upeg-lens-buy--p2peg { background: #C061AE; color: #000; }
+.upeg-lens-buy--opensea { background: #0086FF; color: #fff; }
 
-/* Filter toggle chip */
-.upeg-lens-toggle {
+/* ---------- Floating chip ---------- */
+.upeg-lens-chip {
   position: fixed;
   right: 20px;
   bottom: 20px;
@@ -144,16 +166,15 @@
   transition: background 0.12s ease, transform 0.08s ease;
   user-select: none;
 }
-.upeg-lens-toggle:hover { transform: translateY(-1px); }
-.upeg-lens-toggle__dot {
+.upeg-lens-chip:hover { transform: translateY(-1px); }
+.upeg-lens-chip__dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #6b7280;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
   transition: background 0.12s ease, box-shadow 0.12s ease;
 }
-.upeg-lens-toggle__count {
+.upeg-lens-chip__count {
   background: rgba(255, 255, 255, 0.12);
   padding: 2px 8px;
   border-radius: 999px;
@@ -162,20 +183,101 @@
   min-width: 18px;
   text-align: center;
 }
-.upeg-lens-toggle--on {
+.upeg-lens-chip--filtered {
   background: #16a34a;
   color: #fff;
 }
-.upeg-lens-toggle--on .upeg-lens-toggle__dot {
+.upeg-lens-chip--filtered .upeg-lens-chip__dot {
   background: #fff;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
 }
-.upeg-lens-toggle--on .upeg-lens-toggle__count {
+.upeg-lens-chip--filtered .upeg-lens-chip__count {
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* Hide non-listed cards when filter is on. Unscanned cards remain visible
-   so infinite-scroll additions don't flicker before they're processed. */
+/* ---------- Popover ---------- */
+.upeg-lens-popover {
+  position: fixed;
+  z-index: 2147483646;
+  background: #0f172a;
+  color: #f3f4f6;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 12px 6px;
+  min-width: 220px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  animation: upeg-lens-fade 0.1s ease-out;
+}
+.upeg-lens-popover__title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  font-weight: 700;
+  padding: 0 12px 8px;
+}
+.upeg-lens-popover__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.1s ease;
+}
+.upeg-lens-popover__row:hover { background: rgba(255, 255, 255, 0.05); }
+.upeg-lens-popover__row input {
+  accent-color: #16a34a;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+}
+.upeg-lens-popover__name {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.upeg-lens-popover__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.upeg-lens-popover__dot--p2peg { background: #C061AE; }
+.upeg-lens-popover__dot--opensea { background: #0086FF; }
+.upeg-lens-popover__count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 7px;
+  border-radius: 999px;
+  min-width: 22px;
+  text-align: center;
+}
+.upeg-lens-popover__divider {
+  height: 1px;
+  background: #1f2937;
+  margin: 6px 12px;
+}
+
+/* ---------- Source/listings filter behavior ---------- */
+body.upeg-lens-hide-p2peg .upeg-card.upeg-lens-source-p2peg .upeg-lens-badge {
+  visibility: hidden;
+}
+body.upeg-lens-hide-opensea .upeg-card.upeg-lens-source-opensea .upeg-lens-badge {
+  visibility: hidden;
+}
 body.upeg-lens-filtered .upeg-card.upeg-lens-no-listing {
+  display: none !important;
+}
+body.upeg-lens-filtered.upeg-lens-hide-p2peg .upeg-card.upeg-lens-source-p2peg {
+  display: none !important;
+}
+body.upeg-lens-filtered.upeg-lens-hide-opensea .upeg-card.upeg-lens-source-opensea {
   display: none !important;
 }
