@@ -291,25 +291,22 @@
   margin: 6px 12px;
 }
 
-/* ---------- Source/listings filter behavior ---------- */
+/* ---------- Source/listings filter behavior ----------
+   unipeg.art wraps each card in `.upeg-card-wrap` which is the actual
+   grid cell. Hiding the inner `.upeg-card` would leave the wrap empty
+   but still occupying its slot, so we target the wrap via :has(). */
 body.upeg-lens-hide-p2peg .upeg-card.upeg-lens-source-p2peg .upeg-lens-badge {
   visibility: hidden;
 }
 body.upeg-lens-hide-opensea .upeg-card.upeg-lens-source-opensea .upeg-lens-badge {
   visibility: hidden;
 }
-body.upeg-lens-filtered .upeg-card.upeg-lens-no-listing {
+body.upeg-lens-filtered .upeg-card-wrap:has(.upeg-card.upeg-lens-no-listing) {
   display: none !important;
 }
-
-/* When filtering, force any grid container of .upeg-card to repack so
-   hidden cards don't leave gaps in fixed-position grid layouts. */
-body.upeg-lens-filtered :has(> .upeg-card) {
-  grid-auto-flow: dense !important;
-}
-body.upeg-lens-filtered.upeg-lens-hide-p2peg .upeg-card.upeg-lens-source-p2peg {
+body.upeg-lens-filtered.upeg-lens-hide-p2peg .upeg-card-wrap:has(.upeg-card.upeg-lens-source-p2peg) {
   display: none !important;
 }
-body.upeg-lens-filtered.upeg-lens-hide-opensea .upeg-card.upeg-lens-source-opensea {
+body.upeg-lens-filtered.upeg-lens-hide-opensea .upeg-card-wrap:has(.upeg-card.upeg-lens-source-opensea) {
   display: none !important;
 }

@@ -385,5 +385,5 @@
     subtree: true,
   });
 
-  console.log('[uPEG Lens] content script active (v1.1.1)');
+  console.log('[uPEG Lens] content script active (v1.1.2)');
 })();
