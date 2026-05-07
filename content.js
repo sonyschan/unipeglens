@@ -233,15 +233,21 @@
 
   function refreshCounts() {
     if (!chipEl) return;
+    // Total cards loaded for the current filter (grows with infinite scroll
+    // until the active set is fully loaded — e.g. 85 for "Full Set").
+    const totalCards =
+      document.querySelectorAll('.upeg-card-wrap').length ||
+      document.querySelectorAll('.upeg-card').length;
     const p2peg = document.querySelectorAll('.upeg-card.upeg-lens-source-p2peg').length;
     const opensea = document.querySelectorAll('.upeg-card.upeg-lens-source-opensea').length;
-    let total = 0;
-    if (prefs.showP2peg) total += p2peg;
-    if (prefs.showOpensea) total += opensea;
+    let visible = 0;
+    if (prefs.showP2peg) visible += p2peg;
+    if (prefs.showOpensea) visible += opensea;
 
-    if (countsEl.p2peg) countsEl.p2peg.textContent = String(p2peg);
-    if (countsEl.opensea) countsEl.opensea.textContent = String(opensea);
-    if (countsEl.total) countsEl.total.textContent = String(total);
+    const fmt = (n) => (totalCards > 0 ? `${n}/${totalCards}` : String(n));
+    if (countsEl.p2peg) countsEl.p2peg.textContent = fmt(p2peg);
+    if (countsEl.opensea) countsEl.opensea.textContent = fmt(opensea);
+    if (countsEl.total) countsEl.total.textContent = fmt(visible);
     chipEl.classList.toggle('upeg-lens-chip--filtered', prefs.filter);
   }
 
@@ -385,5 +391,5 @@
     subtree: true,
   });
 
-  console.log('[uPEG Lens] content script active (v1.1.2)');
+  console.log('[uPEG Lens] content script active (v1.1.3)');
 })();
