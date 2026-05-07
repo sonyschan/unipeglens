@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "uPEG OTC Lens",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Show p2peg.app and OpenSea listings inline on unipeg.art/explore.",
   "permissions": ["alarms", "storage"],
   "host_permissions": [
     "https://server.p2peg.app/*",
     "https://unipeg.art/*",
+    "https://server.unipeg.art/*",
     "https://api.opensea.io/*"
   ],
   "background": {
