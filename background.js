@@ -2,6 +2,9 @@
 const P2PEG_BASE = 'https://server.p2peg.app';
 const P2PEG_PAGE_SIZE = 60;
 
+// unipeg.art metadata (notable sets total counts)
+const NOTABLE_URL = 'https://server.unipeg.art/api/rarity/notable';
+
 // OpenSea
 const OPENSEA_BASE = 'https://api.opensea.io';
 const OPENSEA_COLLECTION = 'unipegv4';
@@ -156,6 +159,12 @@ function buildIndex(p2pegListings, openseaListings) {
   return m;
 }
 
+async function fetchNotable() {
+  const res = await fetch(NOTABLE_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 function refresh() {
   if (inFlight) return inFlight;
   inFlight = (async () => {
@@ -167,7 +176,11 @@ function refresh() {
       console.warn('[uPEG Lens] opensea fetch failed:', e.message);
       return [];
     });
+    const notablePromise = fetchNotable()
+      .then((data) => chrome.storage.local.set({ notable: data }))
+      .catch((e) => console.warn('[uPEG Lens] notable fetch failed:', e.message));
     const [p2pegListings, openseaListings] = await Promise.all([p2pegPromise, openseaPromise]);
+    await notablePromise; // doesn't block listings if it fails
     if (p2pegListings.length === 0 && openseaListings.length === 0) {
       console.warn('[uPEG Lens] both sources returned empty, keeping previous index');
     } else {

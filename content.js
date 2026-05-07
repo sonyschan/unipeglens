@@ -11,10 +11,12 @@
   let popoverEl = null;
   let countsEl = { total: null, p2peg: null, opensea: null };
   let enabled = true;
+  let notable = null;
   const ready = (async () => {
     try {
-      const r = await chrome.storage.local.get('enabled');
+      const r = await chrome.storage.local.get(['enabled', 'notable']);
       enabled = r.enabled !== false;
+      notable = r.notable || null;
     } catch {}
   })();
 
@@ -231,13 +233,29 @@
     document.body.classList.toggle('upeg-lens-hide-opensea', !prefs.showOpensea);
   }
 
+  // Map current URL filter param to its true total from the notable API.
+  // Falls back to the count of loaded .upeg-card-wrap elements when the
+  // filter isn't a known notable set (e.g. owner search).
+  function getActiveTotal() {
+    if (notable) {
+      const filter = new URLSearchParams(location.search).get('filter');
+      if (filter && notable.sets && notable.sets[filter]) {
+        return notable.sets[filter].count;
+      }
+      // No filter param → "All uPEGs"
+      if (!filter && typeof notable.total === 'number') {
+        return notable.total;
+      }
+    }
+    return (
+      document.querySelectorAll('.upeg-card-wrap').length ||
+      document.querySelectorAll('.upeg-card').length
+    );
+  }
+
   function refreshCounts() {
     if (!chipEl) return;
-    // Total cards loaded for the current filter (grows with infinite scroll
-    // until the active set is fully loaded — e.g. 85 for "Full Set").
-    const totalCards =
-      document.querySelectorAll('.upeg-card-wrap').length ||
-      document.querySelectorAll('.upeg-card').length;
+    const totalCards = getActiveTotal();
     const p2peg = document.querySelectorAll('.upeg-card.upeg-lens-source-p2peg').length;
     const opensea = document.querySelectorAll('.upeg-card.upeg-lens-source-opensea').length;
     let visible = 0;
@@ -249,6 +267,20 @@
     if (countsEl.opensea) countsEl.opensea.textContent = fmt(opensea);
     if (countsEl.total) countsEl.total.textContent = fmt(visible);
     chipEl.classList.toggle('upeg-lens-chip--filtered', prefs.filter);
+  }
+
+  // Watch URL changes (Vue Router uses pushState/replaceState — popstate
+  // alone misses them).
+  function watchUrlChanges(cb) {
+    const wrap = (orig) =>
+      function (...args) {
+        const r = orig.apply(this, args);
+        cb();
+        return r;
+      };
+    history.pushState = wrap(history.pushState);
+    history.replaceState = wrap(history.replaceState);
+    window.addEventListener('popstate', cb);
   }
 
   function buildPopover() {
@@ -368,11 +400,19 @@
   }
 
   chrome.storage?.onChanged?.addListener((changes, area) => {
-    if (area !== 'local' || !changes.enabled) return;
-    enabled = changes.enabled.newValue !== false;
-    if (enabled) bringUp();
-    else tearDown();
+    if (area !== 'local') return;
+    if (changes.enabled) {
+      enabled = changes.enabled.newValue !== false;
+      if (enabled) bringUp();
+      else tearDown();
+    }
+    if (changes.notable) {
+      notable = changes.notable.newValue || null;
+      refreshCounts();
+    }
   });
+
+  watchUrlChanges(() => refreshCounts());
 
   ready.then(() => {
     if (!enabled) {
@@ -391,5 +431,5 @@
     subtree: true,
   });
 
-  console.log('[uPEG Lens] content script active (v1.1.3)');
+  console.log('[uPEG Lens] content script active (v1.1.4)');
 })();
