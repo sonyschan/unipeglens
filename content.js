@@ -111,7 +111,7 @@
     if (!enabled) return;
     const cards = findCards();
     if (!debugLogged) {
-      console.log(`[uPEG Lens] first scan: found ${cards.length} .upeg-card elements`);
+      console.log(`[Unipeg Lens] first scan: found ${cards.length} .upeg-card elements`);
       debugLogged = true;
     }
     const todo = [];
@@ -137,7 +137,7 @@
     }
     refreshCounts();
     if (todo.length) {
-      console.log(`[uPEG Lens] scan: ${todo.length} new card${todo.length === 1 ? '' : 's'}, ${painted} listed`);
+      console.log(`[Unipeg Lens] scan: ${todo.length} new card${todo.length === 1 ? '' : 's'}, ${painted} listed`);
     }
   }
 
@@ -431,5 +431,5 @@
     subtree: true,
   });
 
-  console.log('[uPEG Lens] content script active (v1.1.5)');
+  console.log('[Unipeg Lens] content script active (v1.2.0)');
 })();

@@ -1,6 +1,6 @@
 <img width="1326" height="1308" alt="image" src="https://github.com/user-attachments/assets/5a950c05-d1bc-4667-8bcd-5ce532aabefd" />
 
-# uPEG OTC Lens
+# Unipeg Lens
 
 A Chrome extension that brings [p2peg.app](https://p2peg.app/collections/unipeg) and [OpenSea](https://opensea.io/collection/unipegv4) listings into the [unipeg.art](https://unipeg.art/explore) gallery — letting you browse, filter, and discover offers directly while exploring the artwork.
 
@@ -23,6 +23,8 @@ This extension closes that loop: while browsing the unipeg.art gallery (with any
 - 🔗 **One-click deep link** straight to the trade page on p2peg or OpenSea
 - 🔄 **Auto-refresh** every 30 seconds — new listings appear without reloading
 - 🎚 **Toolbar toggle** to disable the extension instantly without uninstalling
+- ⭐ **Trait highlighter on `myupeg.art`** — in the `抽取` panel, each part matching your wanted profile gets a star (⭐) prefix
+- 🎯 **Auto-draw on `myupeg.art`** (opt-in) — arm a floating toggle and it auto-clicks `抽取` when a uPEG hits your number/color thresholds
 
 ## Installation (Chrome)
 
@@ -54,7 +56,7 @@ Toggle the **Developer mode** switch in the top-right corner.
 
 Click **Load unpacked** in the top-left, then select the `unipeglens` folder you downloaded.
 
-The uPEG OTC Lens icon (a pixel unicorn with a magnifier) will appear in your Chrome toolbar.
+The Unipeg Lens icon (a pixel unicorn with a magnifier) will appear in your Chrome toolbar.
 
 ### 5. Use it
 
@@ -85,6 +87,12 @@ No accounts, no tracking, no remote code — everything runs locally in your bro
 ## Changelog
 
 Only the three most recent **major or minor** releases are kept here (patches omitted). See [GitHub commits](https://github.com/sonyschan/unipeglens/commits/main) for full history.
+
+### v1.2
+- New: on `myupeg.art`, the `抽取` panel's `部件` traits are scanned and a ⭐ is shown before each part matching a wanted profile (`头发`/`尾巴` = 无, `犄角`/`翅膀`/`饰品` = 有值).
+- Each part is judged independently, so partial matches stay visible while you pick a uPEG.
+- New: opt-in **auto-draw** — arm the floating toggle on `myupeg.art` and it clicks `抽取` for you once the shown uPEG has 5+ parts sharing a number or 4+ colors sharing a hexcode. One-shot; disarms after firing.
+- The candidate grid keeps itself fed: when no uPEG is selected (e.g. after a refresh drops the selection), the first candidate is selected automatically so the detail panel stays populated.
 
 ### v1.1
 - Added OpenSea as a second listing source. Listings from `unipegv4` are merged into the same index as p2peg, keyed by display ID.

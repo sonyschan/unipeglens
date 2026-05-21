@@ -1,0 +1,82 @@
+/* Unipeg Lens — myupeg.art styles */
+
+/* Star prefix for matching traits in the 抽取 panel. */
+.upeg-lens-star::before {
+  content: "⭐\00a0";
+}
+
+/* ---------- auto-draw arm toggle ---------- */
+.upeg-autodraw {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 8px 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(18, 18, 24, 0.94);
+  color: #e9e9ec;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.upeg-autodraw__dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #6b6b76;
+}
+.upeg-autodraw__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  line-height: 1.15;
+}
+.upeg-autodraw__title {
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  opacity: 0.5;
+}
+.upeg-autodraw__state {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* armed = danger (spends real ETH) */
+.upeg-autodraw--armed {
+  border-color: rgba(229, 72, 77, 0.75);
+  background: rgba(38, 15, 17, 0.96);
+  box-shadow: 0 0 0 1px rgba(229, 72, 77, 0.3), 0 0 16px rgba(229, 72, 77, 0.4);
+}
+.upeg-autodraw--armed .upeg-autodraw__dot {
+  background: #e5484d;
+  animation: upeg-autodraw-pulse 1.1s ease-in-out infinite;
+}
+.upeg-autodraw--armed .upeg-autodraw__state {
+  color: #ff6c70;
+}
+
+/* fired = done */
+.upeg-autodraw--fired {
+  border-color: rgba(70, 167, 88, 0.6);
+}
+.upeg-autodraw--fired .upeg-autodraw__dot {
+  background: #46a758;
+}
+.upeg-autodraw--fired .upeg-autodraw__state {
+  color: #5fd175;
+}
+
+@keyframes upeg-autodraw-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.66); }
+}

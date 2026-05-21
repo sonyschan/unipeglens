@@ -78,7 +78,7 @@ async function rotateAgentKey() {
     opensea_fallback_key: api_key,
     opensea_fallback_expires: expires_at,
   });
-  console.log('[uPEG Lens] minted new OpenSea agent key, expires', expires_at);
+  console.log('[Unipeg Lens] minted new OpenSea agent key, expires', expires_at);
   return api_key;
 }
 
@@ -109,7 +109,7 @@ async function fetchAllOpensea() {
       data = await openseaFetch(url(next));
     } catch (e) {
       if (page === 0) throw e;
-      console.warn('[uPEG Lens] opensea page error, stopping pagination:', e.message);
+      console.warn('[Unipeg Lens] opensea page error, stopping pagination:', e.message);
       break;
     }
     const listings = data.listings || [];
@@ -169,27 +169,27 @@ function refresh() {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     const p2pegPromise = fetchAllP2peg().catch((e) => {
-      console.warn('[uPEG Lens] p2peg fetch failed:', e.message);
+      console.warn('[Unipeg Lens] p2peg fetch failed:', e.message);
       return [];
     });
     const openseaPromise = fetchAllOpensea().catch((e) => {
-      console.warn('[uPEG Lens] opensea fetch failed:', e.message);
+      console.warn('[Unipeg Lens] opensea fetch failed:', e.message);
       return [];
     });
     const notablePromise = fetchNotable()
       .then((data) => chrome.storage.local.set({ notable: data }))
-      .catch((e) => console.warn('[uPEG Lens] notable fetch failed:', e.message));
+      .catch((e) => console.warn('[Unipeg Lens] notable fetch failed:', e.message));
     const [p2pegListings, openseaListings] = await Promise.all([p2pegPromise, openseaPromise]);
     await notablePromise; // doesn't block listings if it fails
     if (p2pegListings.length === 0 && openseaListings.length === 0) {
-      console.warn('[uPEG Lens] both sources returned empty, keeping previous index');
+      console.warn('[Unipeg Lens] both sources returned empty, keeping previous index');
     } else {
       index = buildIndex(p2pegListings, openseaListings);
       lastRefresh = Date.now();
     }
     const byP2peg = [...index.values()].filter((l) => l.source === 'p2peg').length;
     const byOpensea = [...index.values()].filter((l) => l.source === 'opensea').length;
-    console.log(`[uPEG Lens] indexed ${index.size} ETH listings (p2peg: ${byP2peg}, opensea: ${byOpensea})`);
+    console.log(`[Unipeg Lens] indexed ${index.size} ETH listings (p2peg: ${byP2peg}, opensea: ${byOpensea})`);
     inFlight = null;
   })();
   return inFlight;
