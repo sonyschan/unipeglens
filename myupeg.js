@@ -27,9 +27,23 @@
   const NONE_TEXT = '无';
 
   // ----- auto-draw thresholds -----
-  const PART_COUNT = 7;   // a fully rendered 部件 panel has 7 rows
-  const PARTS_REPEAT = 5; // fire when 5+ parts share one number
-  const COLOR_REPEAT = 4; // fire when 4+ colors share one hexcode
+  const PART_COUNT = 7;       // a fully rendered 部件 panel has 7 rows
+  const PARTS_REPEAT = 5;     // fire alone when 5+ parts share one number
+  const COLOR_REPEAT = 4;     // fire alone when 4+ colors share one hexcode
+  const AUTODRAW_MT_TIER = 12; // fire alone when the uPEG hits Mine Tier 12
+  // A "colour group" is 2+ rows sharing one hexcode. Combos A1 and B both
+  // want two separate groups ("2+2"); combo A2 wants one group of 3+.
+  const COLOR_GROUP_SIZE = 2;
+  const TWO_COLOR_GROUPS = 2;
+  const COMBO_A2_COLOR = 3;
+  // Combos A1/A2 need 4+ parts sharing a number; combo B needs 3+ parts
+  // plus 3+ stars (parts matching the wanted profile).
+  const COMBO_A_PARTS = 4;
+  const COMBO_B_PARTS = 3;
+  const COMBO_B_STARS = 3;
+  // Trait values and stars can take ~1s to finish rendering after a uPEG
+  // switch — never draw until the panel data has held still this long.
+  const SETTLE_MS = 800;
 
   // A candidate click takes a moment to register — don't re-click within
   // this window, so we never toggle a card off mid-selection.
@@ -41,6 +55,8 @@
   let autodrawResult = ''; // '', 'fired', 'unavailable'
   let toggleEl = null;
   let lastSelectClick = 0;
+  let pendingDraw = null;  // { fingerprint, since } — auto-draw settle gate
+  let confirmTimer = null; // re-checks the panel after it goes quiet
 
   const ready = (async () => {
     try {
@@ -121,26 +137,31 @@
     if (on === dt.classList.contains(STAR_CLASS)) return; // idempotent
     dt.classList.toggle(STAR_CLASS, on);
   }
+  // Whether a part row matches its wanted state — the basis for both the
+  // star prefix and the star-count auto-draw signal.
+  function partMatchesWanted(dt) {
+    const wanted = WANTED[(dt.textContent || '').trim()];
+    if (!wanted) return false;
+    const dd = dt.nextElementSibling;
+    if (!dd || dd.tagName !== 'DD') return false;
+    return wanted === 'value' ? hasValue(dd) : !hasValue(dd);
+  }
   function applyStars(dl) {
     for (const dt of dl.querySelectorAll('dt')) {
-      const wanted = WANTED[(dt.textContent || '').trim()];
-      const dd = dt.nextElementSibling;
-      if (!wanted || !dd || dd.tagName !== 'DD') {
-        setStar(dt, false);
-        continue;
-      }
-      const match = wanted === 'value' ? hasValue(dd) : !hasValue(dd);
-      setStar(dt, match);
+      setStar(dt, partMatchesWanted(dt));
     }
   }
 
   // ---------- auto-draw: reading the panel ----------
-  // Numbers from the 部件 panel (无 / blank ignored — not a number).
-  function readPartNumbers() {
+  // Reads the 部件 panel: row count, the numeric values (无 / blank
+  // ignored — not a number), and the star count (rows matching the
+  // wanted profile).
+  function readParts() {
     const dls = findPartsLists();
     if (!dls.length) return null;
     const nums = [];
     let rows = 0;
+    let stars = 0;
     for (const dt of dls[0].querySelectorAll('dt')) {
       const dd = dt.nextElementSibling;
       if (!dd || dd.tagName !== 'DD') continue;
@@ -148,8 +169,9 @@
       const text = (dd.textContent || '').trim();
       const n = Number(text);
       if (text !== '' && Number.isFinite(n)) nums.push(n);
+      if (partMatchesWanted(dt)) stars++;
     }
-    return { rows, nums };
+    return { rows, nums, stars };
   }
   // Hexcodes from the 颜色 panel, lower-cased for comparison. Non-color
   // text (numbers, 无) simply never matches the hex pattern.
@@ -173,6 +195,14 @@
     }
     return max;
   }
+  // How many distinct values appear at least `n` times.
+  function countGroups(arr, n) {
+    const counts = new Map();
+    for (const v of arr) counts.set(v, (counts.get(v) || 0) + 1);
+    let groups = 0;
+    for (const c of counts.values()) if (c >= n) groups++;
+    return groups;
+  }
   function findDrawButton() {
     for (const b of document.querySelectorAll('button')) {
       if ((b.textContent || '').trim() === '抽取') return b;
@@ -181,21 +211,102 @@
   }
 
   // ---------- auto-draw: decision + click ----------
+  // Decides whether the current panel warrants a draw. Pure read — returns
+  // the reason string (or null) plus a fingerprint of the data it judged,
+  // so the caller can tell when the panel has stopped changing.
+  function decideAutoDraw() {
+    const parts = readParts();
+    const partsReady = !!parts && parts.rows >= PART_COUNT;
+    const partsRepeat = partsReady ? maxRepeat(parts.nums) : 0;
+    const stars = partsReady ? parts.stars : 0;
+
+    const colors = readColorHexes();
+    const colorList = colors || [];
+    const colorRepeat = maxRepeat(colorList);
+    const twoGroups =
+      countGroups(colorList, COLOR_GROUP_SIZE) >= TWO_COLOR_GROUPS;
+    const parts4 = partsReady && partsRepeat >= COMBO_A_PARTS;
+
+    let reason = null;
+    // Mine Tier 12 — the rarest tier. Computed by the background and
+    // surfaced via lastRarityResult once scoreCandidate has answered.
+    const mt =
+      lastRarityResult && typeof lastRarityResult === 'object'
+        ? lastRarityResult.mrTier
+        : null;
+    if (mt === AUTODRAW_MT_TIER) {
+      // Strongest single signal — the candidate is in the top Mine Tier.
+      reason = 'Mine Tier ' + AUTODRAW_MT_TIER + '（最稀有）';
+    } else if (partsReady && partsRepeat >= PARTS_REPEAT) {
+      // Strong single signal.
+      reason = '部件 ' + PARTS_REPEAT + '+ 个相同数字';
+    } else if (colorRepeat >= COLOR_REPEAT) {
+      // Strong single signal.
+      reason = '颜色 ' + COLOR_REPEAT + '+ 个相同 hexcode';
+    } else if (parts4 && twoGroups) {
+      // Combo A1: 4+ parts AND two colour groups of 2+ ("2+2").
+      reason = '部件 ' + COMBO_A_PARTS + '+ 与 颜色 2+2 组合';
+    } else if (parts4 && colorRepeat >= COMBO_A2_COLOR) {
+      // Combo A2: 4+ parts AND 3+ colours of a kind.
+      reason = '部件 ' + COMBO_A_PARTS + '+ 与 颜色 ' + COMBO_A2_COLOR + '+ 组合';
+    } else if (
+      partsReady && partsRepeat >= COMBO_B_PARTS && twoGroups &&
+      stars >= COMBO_B_STARS
+    ) {
+      // Combo B: 3+ parts AND two colour groups of 2+ ("2+2") AND 3+ stars.
+      reason = '部件 ' + COMBO_B_PARTS + '+ 与 颜色 2+2 与 ' +
+        COMBO_B_STARS + '+ 星 组合';
+    }
+    // Fingerprint of exactly the data this decision rested on.
+    const fingerprint = JSON.stringify([
+      parts ? parts.nums : null,
+      parts ? parts.stars : null,
+      colors,
+    ]);
+    return { reason: reason, fingerprint: fingerprint };
+  }
+
   function checkAutoDraw() {
-    if (!enabled || !armed) return;
+    if (!enabled || !armed) {
+      pendingDraw = null;
+      return;
+    }
     // Only evaluate a uPEG that section 02 actually has selected — otherwise
     // section 03 is empty or showing stale data.
     const cards = findCandidateGrid();
-    if (cards && cards.length && !cards.some(isCandidateSelected)) return;
-    const parts = readPartNumbers();
-    if (parts && parts.rows >= PART_COUNT && maxRepeat(parts.nums) >= PARTS_REPEAT) {
-      fireDraw('部件 ' + PARTS_REPEAT + '+ 个相同数字');
+    if (cards && cards.length && !cards.some(isCandidateSelected)) {
+      pendingDraw = null;
       return;
     }
-    const colors = readColorHexes();
-    if (colors && maxRepeat(colors) >= COLOR_REPEAT) {
-      fireDraw('颜色 ' + COLOR_REPEAT + '+ 个相同 hexcode');
+
+    const decision = decideAutoDraw();
+    if (!decision.reason) {
+      pendingDraw = null;
+      return;
     }
+
+    // Settle gate: trait values and stars can take ~1s to finish rendering
+    // after a uPEG switch. Never draw on a half-settled panel — require the
+    // exact same data to hold for SETTLE_MS first.
+    const now = Date.now();
+    if (pendingDraw && pendingDraw.fingerprint === decision.fingerprint) {
+      if (now - pendingDraw.since >= SETTLE_MS) {
+        pendingDraw = null;
+        clearTimeout(confirmTimer);
+        confirmTimer = null;
+        fireDraw(decision.reason);
+      }
+      return;
+    }
+    // First sighting, or the panel changed — (re)start the settle clock.
+    pendingDraw = { fingerprint: decision.fingerprint, since: now };
+    // Once the panel goes quiet, no mutation would trigger another scan,
+    // so schedule the confirming re-check ourselves.
+    clearTimeout(confirmTimer);
+    confirmTimer = setTimeout(function () {
+      confirmTimer = null;
+      checkAutoDraw();
+    }, SETTLE_MS + 50);
   }
   function fireDraw(reason) {
     const btn = findDrawButton();
@@ -237,6 +348,7 @@
     } else {
       armed = true;
       autodrawResult = '';
+      pendingDraw = null;
     }
     updateToggleUI();
     if (armed) checkAutoDraw(); // evaluate the uPEG already on screen
@@ -262,11 +374,198 @@
     }
   }
 
+  // ---------- rarity panel (estimated OR / MR rank) ----------
+  // The 抽取 panel exposes the candidate uPEG's 部件 indices and 颜色
+  // hexes — exactly the inputs OpenRarity + MineRarity need. We read them,
+  // ask the background to rank the candidate against the full collection,
+  // and show the estimated OR / MR rank right above the 抽取 button.
+
+  // 部件 panel <dt> label → metadata trait key.
+  const PART_LABEL_TO_KEY = {
+    '头发': 'hair',
+    '犄角': 'horn',
+    '翅膀': 'wings',
+    '尾巴': 'tail',
+    '饰品': 'accessories',
+    '前腿': 'legsFront',
+    '后腿': 'legsBack',
+  };
+  // 颜色 panel <dt> label substring → metadata colour key.
+  const COLOR_LABEL_RULES = [
+    ['背景', 'backGroundColor'],
+    ['身体', 'bodyColor'],
+    ['眼睛', 'eyesColor'],
+    ['头发', 'hairColor'],
+    ['犄角', 'hornColor'],
+    ['尾巴', 'tailColor'],
+    ['饰品', 'accessoriesColor'],
+  ];
+
+  let lastRarityFp = '';       // fingerprint of the last-scored candidate
+  let lastRarityResult = null; // cached score response for that fingerprint
+
+  // The 7 部件 rows as { traitKey: index } — null until all 7 have rendered.
+  function readPanelTraits() {
+    const dls = findPartsLists();
+    if (!dls.length) return null;
+    const traits = {};
+    let mapped = 0;
+    for (const dt of dls[0].querySelectorAll('dt')) {
+      const key = PART_LABEL_TO_KEY[(dt.textContent || '').trim()];
+      if (!key) continue;
+      const dd = dt.nextElementSibling;
+      if (!dd || dd.tagName !== 'DD') continue;
+      const text = (dd.textContent || '').trim();
+      const n = Number(text);
+      traits[key] = text !== '' && Number.isFinite(n) ? n : 0; // 无 → 0
+      mapped++;
+    }
+    return mapped === 7 ? traits : null;
+  }
+
+  // The 颜色 rows as { colorKey: hex }. Gated-off colours aren't rendered,
+  // so absent parts naturally drop out.
+  function readPanelColors() {
+    const section = sectionByHeading('颜色');
+    if (!section) return {};
+    const colors = {};
+    for (const dt of section.querySelectorAll('dt')) {
+      const dd = dt.nextElementSibling;
+      if (!dd || dd.tagName !== 'DD') continue;
+      const hex = (dd.textContent || '').match(/#[0-9a-fA-F]{6}/);
+      if (!hex) continue;
+      const label = (dt.textContent || '').trim();
+      for (const [sub, key] of COLOR_LABEL_RULES) {
+        if (label.includes(sub)) {
+          colors[key] = hex[0].toLowerCase();
+          break;
+        }
+      }
+    }
+    return colors;
+  }
+
+  function removeRarityBox() {
+    const box = document.querySelector('.upeg-rarity-box');
+    if (box) box.remove();
+  }
+
+  // The rank box sits just above the 抽取 button. The panel re-renders on
+  // every uPEG switch, so re-create the box whenever it has been wiped.
+  function ensureRarityBox() {
+    let box = document.querySelector('.upeg-rarity-box');
+    if (box && box.isConnected) return box;
+    const btn = findDrawButton();
+    const row = btn && btn.parentElement;
+    if (!row || !row.parentElement) return null;
+    box = document.createElement('div');
+    box.className = 'upeg-rarity-box';
+    row.parentElement.insertBefore(box, row);
+    return box;
+  }
+
+  function renderRarityBox(box, state) {
+    const title =
+      '<div class="upeg-rarity-box__title">预估稀有度排名 / Estimated rank</div>';
+    let html;
+    if (state === 'pending' || state === 'loading' || state === 'unavailable') {
+      const msg = {
+        pending: '等待面板渲染…',
+        loading: '计算中…',
+        unavailable: '稀有度数据加载中（首次需下载约 10 MB）…',
+      }[state];
+      html = title + `<div class="upeg-rarity-box__msg">${msg}</div>`;
+    } else {
+      const tierEm = (label, kind) =>
+        label
+          ? ` <em class="upeg-rarity-box__tier upeg-rarity-box__tier--${kind}">${label}</em>`
+          : '';
+      // MineRarity chip = the Mine Tier (1-12); colour follows the
+      // UR/SSR/SR/R band the tier falls in.
+      const mtKind = (state.mrTierLabel || '').toLowerCase();
+      html =
+        title +
+        '<div class="upeg-rarity-box__row">' +
+          '<span class="upeg-rarity-box__k">OpenRarity</span>' +
+          `<span class="upeg-rarity-box__v">#${state.orRank.toLocaleString()}` +
+          `${tierEm(state.orTier, 'or')}</span></div>` +
+        '<div class="upeg-rarity-box__row">' +
+          '<span class="upeg-rarity-box__k">MineRarity</span>' +
+          `<span class="upeg-rarity-box__v">#${state.mrRank.toLocaleString()}` +
+          `${tierEm('T' + state.mrTier, mtKind || 'mt')}</span></div>` +
+        `<div class="upeg-rarity-box__foot">共 ${state.total.toLocaleString()} 只 · ` +
+          'Mine Tier 分 T1–T12,T12 最稀有</div>';
+    }
+    // Idempotent — only touch the DOM when the content actually changed, so
+    // a stable panel never feeds the MutationObserver another scan.
+    if (box.__upegRarityHtml === html) return;
+    box.__upegRarityHtml = html;
+    box.innerHTML = html;
+  }
+
+  // Read the candidate off the panel, ask the background to rank it, paint
+  // the box. Runs every scan; only messages when the candidate changed.
+  function updateRarityPanel() {
+    if (!enabled) {
+      removeRarityBox();
+      return;
+    }
+    const box = ensureRarityBox();
+    if (!box) return; // 抽取 button not in the DOM yet
+    const traits = readPanelTraits();
+    if (!traits) {
+      renderRarityBox(box, 'pending');
+      lastRarityFp = '';
+      return;
+    }
+    const colors = readPanelColors();
+    const fp = JSON.stringify([traits, colors]);
+    if (fp === lastRarityFp) {
+      // Same candidate — repaint the cached result (a panel re-render may
+      // have wiped the box).
+      renderRarityBox(box, lastRarityResult || 'loading');
+      return;
+    }
+    lastRarityFp = fp;
+    lastRarityResult = null;
+    renderRarityBox(box, 'loading');
+    chrome.runtime.sendMessage(
+      { type: 'scoreCandidate', traits, colors },
+      (resp) => {
+        if (chrome.runtime.lastError) {
+          console.warn(
+            '[Unipeg Lens] scoreCandidate message failed:',
+            chrome.runtime.lastError.message
+          );
+          return;
+        }
+        if (fp !== lastRarityFp) return; // candidate changed mid-flight
+        if (resp && resp.ready) {
+          lastRarityResult = resp;
+        } else {
+          lastRarityResult = 'unavailable';
+          console.warn(
+            '[Unipeg Lens] rarity not ready:',
+            (resp && resp.error) || '(no response)'
+          );
+        }
+        const b = ensureRarityBox();
+        if (b) renderRarityBox(b, lastRarityResult);
+        // MT is only known now (after the round-trip); re-evaluate auto-draw
+        // so a Mine Tier 12 hit can trigger.
+        checkAutoDraw();
+      }
+    );
+  }
+
   // ---------- scan loop ----------
   function scan() {
     if (!enabled) return;
     for (const dl of findPartsLists()) applyStars(dl);
     ensureSelection();
+    // updateRarityPanel first: it clears lastRarityResult on a uPEG switch,
+    // so checkAutoDraw never reads a previous uPEG's Mine Tier.
+    updateRarityPanel();
     checkAutoDraw();
   }
   function clearStars() {
@@ -281,12 +580,22 @@
 
   // Honour the toolbar on/off toggle, same as the unipeg.art content script.
   chrome.storage?.onChanged?.addListener((changes, area) => {
-    if (area !== 'local' || !changes.enabled) return;
-    enabled = changes.enabled.newValue !== false;
-    if (!enabled) armed = false; // disabling the extension also disarms
-    updateToggleUI();
-    if (enabled) scan();
-    else clearStars();
+    if (area !== 'local') return;
+    if (changes.enabled) {
+      enabled = changes.enabled.newValue !== false;
+      if (!enabled) armed = false; // disabling the extension also disarms
+      updateToggleUI();
+      if (enabled) scan();
+      else {
+        clearStars();
+        removeRarityBox();
+      }
+    }
+    // The background just (re)scored the collection — re-rank the candidate.
+    if (changes.rarity) {
+      lastRarityFp = '';
+      scan();
+    }
   });
 
   ready.then(() => {
@@ -300,5 +609,5 @@
     characterData: true,
   });
 
-  console.log('[Unipeg Lens] myupeg.art content script active (v1.2.0)');
+  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.0)');
 })();

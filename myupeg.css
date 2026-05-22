@@ -80,3 +80,65 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.35; transform: scale(0.66); }
 }
+
+/* ---------- estimated rarity rank box (抽取 panel) ---------- */
+.upeg-rarity-box {
+  box-sizing: border-box;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(20, 20, 28, 0.9);
+  color: #e9e9ec;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.upeg-rarity-box__title {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 7px;
+}
+.upeg-rarity-box__msg {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.upeg-rarity-box__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+.upeg-rarity-box__k {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  opacity: 0.62;
+}
+.upeg-rarity-box__v {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.upeg-rarity-box__tier {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  margin-left: 5px;
+  vertical-align: middle;
+  background: #3a3a46;
+  color: #e9e9ec;
+}
+.upeg-rarity-box__tier--or  { background: #2f6f4f; color: #eafff4; }
+.upeg-rarity-box__tier--ur  { background: #f59e0b; color: #1a1205; }
+.upeg-rarity-box__tier--ssr { background: #a855f7; color: #faf5ff; }
+.upeg-rarity-box__tier--sr  { background: #3b82f6; color: #eff6ff; }
+.upeg-rarity-box__tier--r   { background: #10b981; color: #03281d; }
+.upeg-rarity-box__foot {
+  margin-top: 6px;
+  font-size: 9.5px;
+  line-height: 1.3;
+  opacity: 0.42;
+}

@@ -23,8 +23,9 @@ This extension closes that loop: while browsing the unipeg.art gallery (with any
 - 🔗 **One-click deep link** straight to the trade page on p2peg or OpenSea
 - 🔄 **Auto-refresh** every 30 seconds — new listings appear without reloading
 - 🎚 **Toolbar toggle** to disable the extension instantly without uninstalling
+- 🏆 **OpenRarity + MineRarity rank on `myupeg.art`** — the `抽取` panel shows the candidate uPEG's estimated OR / MR rank and tier before you spend ETH
 - ⭐ **Trait highlighter on `myupeg.art`** — in the `抽取` panel, each part matching your wanted profile gets a star (⭐) prefix
-- 🎯 **Auto-draw on `myupeg.art`** (opt-in) — arm a floating toggle and it auto-clicks `抽取` when a uPEG hits your number/color thresholds
+- 🎯 **Auto-draw on `myupeg.art`** (opt-in) — arm a floating toggle and it auto-clicks `抽取` when a uPEG hits your number/color thresholds or lands in **Mine Tier 12**
 
 ## Installation (Chrome)
 
@@ -80,13 +81,20 @@ The key is stored only in your browser via `chrome.storage.local`. It is never s
 
 - **Background service worker** polls both `server.p2peg.app/listings` and `api.opensea.io/v2/listings/collection/unipegv4/all` every 30 seconds and builds an in-memory index keyed by display ID.
 - **Content script** scans `unipeg.art/explore` for `.upeg-card` elements, looks up their display ID against the index, and paints a source-colored badge on matches.
+- **Rarity scoring** runs locally: the background worker pulls a full collection-metadata mirror and builds the **OpenRarity** (entropy information-content) and **MineRarity** (kernel-K probability) score distribution, refreshed when the collection grows or the cache passes 6 hours. On `myupeg.art` the content script reads the `抽取` panel's traits and asks the background to rank that candidate against the distribution.
 - **Popup** controls extension on/off plus the OpenSea API key. **Floating chip** controls source filter and listings-only mode.
 
-No accounts, no tracking, no remote code — everything runs locally in your browser.
+No accounts, no tracking, no remote code — everything runs locally in your browser; only public data files are fetched.
 
 ## Changelog
 
 Only the three most recent **major or minor** releases are kept here (patches omitted). See [GitHub commits](https://github.com/sonyschan/unipeglens/commits/main) for full history.
+
+### v1.3
+- New: on `myupeg.art`, the `抽取` (draw) panel shows the candidate uPEG's **estimated OpenRarity and MineRarity rank** — judge how rare a roll would be before spending ETH.
+- Ranks update live as you switch uPEGs or the seed changes; OpenRarity shows its percentile tier (TOP 1% / 3% / 10% / 25%) and MineRarity its **Mine Tier** (T1–T12, T12 rarest).
+- Opt-in auto-draw gained a trigger: it also fires when the shown uPEG lands in **Mine Tier 12** (the rarest tier).
+- Scoring runs locally: the background worker pulls a full collection-metadata mirror, builds the score distribution, and refreshes it when the collection grows or the cache passes 6 hours.
 
 ### v1.2
 - New: on `myupeg.art`, the `抽取` panel's `部件` traits are scanned and a ⭐ is shown before each part matching a wanted profile (`头发`/`尾巴` = 无, `犄角`/`翅膀`/`饰品` = 有值).
@@ -99,10 +107,6 @@ Only the three most recent **major or minor** releases are kept here (patches om
 - Per-source price badges: **pink** for p2peg, **blue** for OpenSea. Modal "Buy" deep-links to the matching marketplace.
 - Floating chip became a popover with independent source toggles plus the existing "Listings only" filter.
 - Popup gained an optional **OpenSea API key** field; without one, the extension auto-mints and rotates a free agent-tier key.
-
-### v1.0
-- Initial release. Pulls open ETH listings from `server.p2peg.app`, paints a price badge on each matching `.upeg-card` in `unipeg.art/explore`, and opens a details modal with a deep link to the trade page.
-- Filter chip to show "Listings only" and a toolbar popup with enable/disable switch.
 
 ## Contact
 
