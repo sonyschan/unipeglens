@@ -12,6 +12,10 @@ const NOTABLE_URL = 'https://server.unipeg.art/api/rarity/notable';
 const UPEGS_FULL_URL =
   'https://unipeg-lens.sonys-chan.workers.dev/data/upegs_full.json';
 const RARITY_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+// Bump when the scoring algorithm or blob shape changes — invalidates any
+// cached `rarity` blob computed under an older schema. Schema 2 = OR uses
+// metadata indices (dashboard-aligned); 1 = old gated-hex variant.
+const RARITY_SCHEMA = 2;
 
 // OpenSea
 const OPENSEA_BASE = 'https://api.opensea.io';
@@ -345,56 +349,56 @@ function tierRow(pct, table) {
 
 // --- OpenRarity feature extraction ---
 //
-// Traits are scored by metadata index (0 = absent/null). Colours are
-// scored by HEX, with '∅' standing in when the colour's gate part is
-// absent — so "hornless" is itself a categorical value. Hex (not palette
-// index) is deliberate: the myupeg.art draw panel only exposes hexes, so
-// hex keeps a draw candidate scorable through the exact same code path as
-// the cached collection.
-const OR_COLOR_GATE = {
-  bodyColor: null,
-  eyesColor: null,
-  backGroundColor: null,
-  hairColor: 'hair',
-  hornColor: 'horn',
-  tailColor: 'tail',
-  accessoriesColor: 'accessories',
-};
+// Matches the unipeg-lens dashboard's computeOpenRarity (js/shared.js):
+// uses metadata INDICES for all 14 keys (7 trait + 7 colour). NULL /
+// absent (index 0) counts as a real categorical value. The myupeg.art
+// draw panel only exposes colour HEXES, so for a candidate we convert
+// hex→index via MR_MAIN_HEX_TO_IDX (the 36-entry main palette) and
+// rarity.bgHexToIdx (the 6-entry background palette derived from the
+// collection on every refresh).
 const OR_KEYS = OR_TRAIT_KEYS.concat(OR_COLOR_KEYS);
 
-function orValue(item, key) {
-  const m = item.metadata || {};
-  if (!(key in OR_COLOR_GATE)) return m[key] || 0; // trait slot → index
-  const gate = OR_COLOR_GATE[key];
-  if (gate && (m[gate] || 0) === 0) return '∅'; // gated-off colour
-  return (item.colors || {})[key] || '∅';
-}
+// Hex → first matching palette index. The 2 duplicate hexes (#cbdbfc at
+// indices 1+21, #306082 at 11+13) resolve to the lower index — a small
+// approximation only for candidates whose colour happens to be one of
+// those two hexes.
+const MR_MAIN_HEX_TO_IDX = (() => {
+  const m = {};
+  for (let i = 0; i < MR_MAIN_PALETTE.length; i++) {
+    const hex = MR_MAIN_PALETTE[i];
+    if (!(hex in m)) m[hex] = i;
+  }
+  return m;
+})();
 
 // Per-item OpenRarity raw information content = Σ −log2 p(value).
 // `count(key, value)` → how many uPEGs share that value (Map or object).
-function orRawIC(item, count, total) {
+function orRawIC(meta, count, total) {
   let raw = 0;
   for (const k of OR_KEYS) {
-    const n = count(k, orValue(item, k)) || 1; // unseen value → treat as 1
+    const n = count(k, meta[k] || 0) || 1; // unseen value → treat as 1
     raw -= Math.log2(n / total);
   }
   return raw;
 }
 
 // Score the whole collection → the distribution the draw panel ranks
-// against: { total, computedAt, H, orCounts, orScores, mrProbs }.
-//   orCounts : { key: { value: n } }       — for a candidate's OR score
-//   orScores : OpenRarity scores, DESC     — rarest first
-//   mrProbs  : MineRarity probabilities, ASC — rarest (smallest) first
+// against:
+//   orCounts   : { key: { index: n } }       — for a candidate's OR score
+//   orScores   : OpenRarity scores, DESC     — rarest first
+//   mrProbs    : MineRarity probabilities, ASC — rarest (smallest) first
+//   bgHexToIdx : { bgHex: 0..5 } — derived from the data, lets the
+//                candidate's background hex map back to its index.
 function computeRarity(items) {
   const total = items.length;
 
-  // OpenRarity: per-(key, value) counts → entropy H → normalised IC score.
+  // OpenRarity: per-(key, index) counts → entropy H → normalised IC score.
   const counts = {};
   for (const k of OR_KEYS) counts[k] = new Map();
   for (const it of items) {
+    const meta = it.metadata || {};
     for (const k of OR_KEYS) {
-      const v = orValue(it, k);
+      const v = meta[k] || 0;
       counts[k].set(v, (counts[k].get(v) || 0) + 1);
     }
   }
@@ -402,12 +406,12 @@ function computeRarity(items) {
   for (const k of OR_KEYS) {
     for (const n of counts[k].values()) {
       const p = n / total;
-      H -= p * Math.log2(p);
+      if (p > 0) H -= p * Math.log2(p);
     }
   }
   const getCount = (k, v) => counts[k].get(v);
   const orScores = items
-    .map((it) => orRawIC(it, getCount, total) / (H || 1))
+    .map((it) => orRawIC(it.metadata || {}, getCount, total) / (H || 1))
     .sort((a, b) => b - a);
 
   // MineRarity: kernel-K probability, smallest (rarest) first.
@@ -417,18 +421,46 @@ function computeRarity(items) {
   const orCounts = {};
   for (const k of OR_KEYS) orCounts[k] = Object.fromEntries(counts[k]);
 
-  return { total, computedAt: Date.now(), H, orCounts, orScores, mrProbs };
+  // Background palette: 6 entries, not a hard-coded constant. Derive from
+  // the collection (first hex per bg index wins).
+  const bgHexToIdx = {};
+  for (const it of items) {
+    const idx = (it.metadata || {}).backGroundColor;
+    const hex = ((it.colors || {}).backGroundColor || '').toLowerCase();
+    if (idx != null && hex && !(hex in bgHexToIdx)) bgHexToIdx[hex] = idx;
+  }
+
+  return {
+    schemaVersion: RARITY_SCHEMA,
+    total, computedAt: Date.now(),
+    H, orCounts, orScores, mrProbs, bgHexToIdx,
+  };
 }
 
 // Score one draw-panel candidate against a cached collection distribution.
 //   traits : { traitKey: index }   — all 7 trait slots (0 = absent)
 //   colors : { colorKey: hex }     — gated-off colours simply omitted
 // Returns 1-based ranks ("would rank #N") plus tier labels.
+const OR_MAIN_COLOR_KEYS = [
+  'bodyColor', 'eyesColor', 'hairColor',
+  'hornColor', 'tailColor', 'accessoriesColor',
+];
 function scoreCandidate(rarity, traits, colors) {
-  const item = { metadata: traits || {}, colors: colors || {} };
+  // Build a metadata-shaped object: traits are already indices; for OR
+  // we also need the colours as indices (the dashboard's OR is index-
+  // based). MineRarity is hex-native so we pass `colors` through.
+  const c = colors || {};
+  const meta = { ...(traits || {}) };
+  const bg = (c.backGroundColor || '').toLowerCase();
+  meta.backGroundColor = bg ? (rarity.bgHexToIdx || {})[bg] ?? 0 : 0;
+  for (const key of OR_MAIN_COLOR_KEYS) {
+    const hex = (c[key] || '').toLowerCase();
+    meta[key] = hex ? MR_MAIN_HEX_TO_IDX[hex] ?? 0 : 0;
+  }
+  const item = { metadata: meta, colors: c };
   const total = rarity.total;
   const count = (k, v) => (rarity.orCounts[k] || {})[v];
-  const orScore = orRawIC(item, count, total) / (rarity.H || 1);
+  const orScore = orRawIC(meta, count, total) / (rarity.H || 1);
   const mrProb = mineRarityProb(item);
 
   // orScores DESC → rank = #(score strictly greater) + 1.
@@ -491,6 +523,7 @@ async function maybeRefreshRarity(notableTotal) {
   const { rarity } = await chrome.storage.local.get('rarity');
   const stale =
     !rarity ||
+    rarity.schemaVersion !== RARITY_SCHEMA ||
     Date.now() - (rarity.computedAt || 0) > RARITY_MAX_AGE_MS ||
     (typeof notableTotal === 'number' && notableTotal !== rarity.notableTotal);
   if (stale) refreshRarity(notableTotal);
@@ -585,11 +618,16 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   (async () => {
     try {
       let { rarity } = await chrome.storage.local.get('rarity');
-      if (!rarity || !Array.isArray(rarity.orScores)) {
-        // Not scored yet — compute now. Awaiting here (with the message
-        // channel held open by `return true`) keeps the service worker
-        // alive through the ~10 MB pull + scoring, instead of letting a
-        // fire-and-forget compute die when the worker is recycled.
+      if (
+        !rarity ||
+        !Array.isArray(rarity.orScores) ||
+        rarity.schemaVersion !== RARITY_SCHEMA
+      ) {
+        // Not scored yet (or scored under an older algorithm) — recompute
+        // now. Awaiting here (with the message channel held open by
+        // `return true`) keeps the service worker alive through the
+        // ~10 MB pull + scoring, instead of letting a fire-and-forget
+        // compute die when the worker is recycled.
         await refreshRarity(null);
         ({ rarity } = await chrome.storage.local.get('rarity'));
       }

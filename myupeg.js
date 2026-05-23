@@ -31,18 +31,9 @@
   const PARTS_REPEAT = 5;     // fire alone when 5+ parts share one number
   const COLOR_REPEAT = 4;     // fire alone when 4+ colors share one hexcode
   const AUTODRAW_MT_TIER = 12; // fire alone when the uPEG hits Mine Tier 12
-  // A "colour group" is 2+ rows sharing one hexcode. Combos A1 and B both
-  // want two separate groups ("2+2"); combo A2 wants one group of 3+.
-  const COLOR_GROUP_SIZE = 2;
-  const TWO_COLOR_GROUPS = 2;
-  const COMBO_A2_COLOR = 3;
-  // Combos A1/A2 need 4+ parts sharing a number; combo B needs 3+ parts
-  // plus 3+ stars (parts matching the wanted profile).
-  const COMBO_A_PARTS = 4;
-  const COMBO_B_PARTS = 3;
-  const COMBO_B_STARS = 3;
-  // Trait values and stars can take ~1s to finish rendering after a uPEG
-  // switch — never draw until the panel data has held still this long.
+  const AUTODRAW_RANK_LIMIT = 30; // fire when OR and MR ranks are both < this
+  // Trait values can take ~1s to finish rendering after a uPEG switch —
+  // never draw until the panel data has held still this long.
   const SETTLE_MS = 800;
 
   // A candidate click takes a moment to register — don't re-click within
@@ -57,6 +48,7 @@
   let lastSelectClick = 0;
   let pendingDraw = null;  // { fingerprint, since } — auto-draw settle gate
   let confirmTimer = null; // re-checks the panel after it goes quiet
+  let observer = null;     // MutationObserver — disconnected on context loss
 
   const ready = (async () => {
     try {
@@ -153,15 +145,13 @@
   }
 
   // ---------- auto-draw: reading the panel ----------
-  // Reads the 部件 panel: row count, the numeric values (无 / blank
-  // ignored — not a number), and the star count (rows matching the
-  // wanted profile).
+  // Reads the 部件 panel: row count and the numeric values (无 / blank
+  // ignored — not a number).
   function readParts() {
     const dls = findPartsLists();
     if (!dls.length) return null;
     const nums = [];
     let rows = 0;
-    let stars = 0;
     for (const dt of dls[0].querySelectorAll('dt')) {
       const dd = dt.nextElementSibling;
       if (!dd || dd.tagName !== 'DD') continue;
@@ -169,9 +159,8 @@
       const text = (dd.textContent || '').trim();
       const n = Number(text);
       if (text !== '' && Number.isFinite(n)) nums.push(n);
-      if (partMatchesWanted(dt)) stars++;
     }
-    return { rows, nums, stars };
+    return { rows, nums };
   }
   // Hexcodes from the 颜色 panel, lower-cased for comparison. Non-color
   // text (numbers, 无) simply never matches the hex pattern.
@@ -195,14 +184,6 @@
     }
     return max;
   }
-  // How many distinct values appear at least `n` times.
-  function countGroups(arr, n) {
-    const counts = new Map();
-    for (const v of arr) counts.set(v, (counts.get(v) || 0) + 1);
-    let groups = 0;
-    for (const c of counts.values()) if (c >= n) groups++;
-    return groups;
-  }
   function findDrawButton() {
     for (const b of document.querySelectorAll('button')) {
       if ((b.textContent || '').trim() === '抽取') return b;
@@ -218,49 +199,39 @@
     const parts = readParts();
     const partsReady = !!parts && parts.rows >= PART_COUNT;
     const partsRepeat = partsReady ? maxRepeat(parts.nums) : 0;
-    const stars = partsReady ? parts.stars : 0;
 
     const colors = readColorHexes();
-    const colorList = colors || [];
-    const colorRepeat = maxRepeat(colorList);
-    const twoGroups =
-      countGroups(colorList, COLOR_GROUP_SIZE) >= TWO_COLOR_GROUPS;
-    const parts4 = partsReady && partsRepeat >= COMBO_A_PARTS;
+    const colorRepeat = maxRepeat(colors || []);
 
     let reason = null;
-    // Mine Tier 12 — the rarest tier. Computed by the background and
-    // surfaced via lastRarityResult once scoreCandidate has answered.
-    const mt =
+    // Rarity signals from the background — `lastRarityResult` is the
+    // scoreCandidate response (an object once it has answered).
+    const rar =
       lastRarityResult && typeof lastRarityResult === 'object'
-        ? lastRarityResult.mrTier
+        ? lastRarityResult
         : null;
-    if (mt === AUTODRAW_MT_TIER) {
-      // Strongest single signal — the candidate is in the top Mine Tier.
+    if (rar && rar.mrTier === AUTODRAW_MT_TIER) {
+      // Top Mine Tier — the rarest bucket.
       reason = 'Mine Tier ' + AUTODRAW_MT_TIER + '（最稀有）';
+    } else if (
+      rar &&
+      rar.orRank < AUTODRAW_RANK_LIMIT &&
+      rar.mrRank < AUTODRAW_RANK_LIMIT
+    ) {
+      // Rare double hit — top ranks by BOTH OpenRarity and MineRarity.
+      reason =
+        'OR 与 MR 名次同时 < ' + AUTODRAW_RANK_LIMIT +
+        '（OR #' + rar.orRank + ' / MR #' + rar.mrRank + '）';
     } else if (partsReady && partsRepeat >= PARTS_REPEAT) {
       // Strong single signal.
       reason = '部件 ' + PARTS_REPEAT + '+ 个相同数字';
     } else if (colorRepeat >= COLOR_REPEAT) {
       // Strong single signal.
       reason = '颜色 ' + COLOR_REPEAT + '+ 个相同 hexcode';
-    } else if (parts4 && twoGroups) {
-      // Combo A1: 4+ parts AND two colour groups of 2+ ("2+2").
-      reason = '部件 ' + COMBO_A_PARTS + '+ 与 颜色 2+2 组合';
-    } else if (parts4 && colorRepeat >= COMBO_A2_COLOR) {
-      // Combo A2: 4+ parts AND 3+ colours of a kind.
-      reason = '部件 ' + COMBO_A_PARTS + '+ 与 颜色 ' + COMBO_A2_COLOR + '+ 组合';
-    } else if (
-      partsReady && partsRepeat >= COMBO_B_PARTS && twoGroups &&
-      stars >= COMBO_B_STARS
-    ) {
-      // Combo B: 3+ parts AND two colour groups of 2+ ("2+2") AND 3+ stars.
-      reason = '部件 ' + COMBO_B_PARTS + '+ 与 颜色 2+2 与 ' +
-        COMBO_B_STARS + '+ 星 组合';
     }
     // Fingerprint of exactly the data this decision rested on.
     const fingerprint = JSON.stringify([
       parts ? parts.nums : null,
-      parts ? parts.stars : null,
       colors,
     ]);
     return { reason: reason, fingerprint: fingerprint };
@@ -529,37 +500,79 @@
     lastRarityFp = fp;
     lastRarityResult = null;
     renderRarityBox(box, 'loading');
-    chrome.runtime.sendMessage(
-      { type: 'scoreCandidate', traits, colors },
-      (resp) => {
-        if (chrome.runtime.lastError) {
-          console.warn(
-            '[Unipeg Lens] scoreCandidate message failed:',
-            chrome.runtime.lastError.message
-          );
-          return;
+    try {
+      chrome.runtime.sendMessage(
+        { type: 'scoreCandidate', traits, colors },
+        (resp) => {
+          if (!extensionAlive()) return;
+          if (chrome.runtime.lastError) {
+            console.warn(
+              '[Unipeg Lens] scoreCandidate message failed:',
+              chrome.runtime.lastError.message
+            );
+            return;
+          }
+          if (fp !== lastRarityFp) return; // candidate changed mid-flight
+          if (resp && resp.ready) {
+            lastRarityResult = resp;
+          } else {
+            lastRarityResult = 'unavailable';
+            console.warn(
+              '[Unipeg Lens] rarity not ready:',
+              (resp && resp.error) || '(no response)'
+            );
+          }
+          const b = ensureRarityBox();
+          if (b) renderRarityBox(b, lastRarityResult);
+          // MT is only known now (after the round-trip); re-evaluate
+          // auto-draw so a Mine Tier 12 hit can trigger.
+          checkAutoDraw();
         }
-        if (fp !== lastRarityFp) return; // candidate changed mid-flight
-        if (resp && resp.ready) {
-          lastRarityResult = resp;
-        } else {
-          lastRarityResult = 'unavailable';
-          console.warn(
-            '[Unipeg Lens] rarity not ready:',
-            (resp && resp.error) || '(no response)'
-          );
-        }
-        const b = ensureRarityBox();
-        if (b) renderRarityBox(b, lastRarityResult);
-        // MT is only known now (after the round-trip); re-evaluate auto-draw
-        // so a Mine Tier 12 hit can trigger.
-        checkAutoDraw();
-      }
-    );
+      );
+    } catch (e) {
+      // Extension reloaded out from under this stale content script.
+      teardownStale();
+    }
   }
 
   // ---------- scan loop ----------
+  // After the extension is reloaded/updated, this content script keeps
+  // running on the already-open tab but its chrome.* APIs are dead —
+  // `chrome.runtime.id` goes undefined. Detect that and stop cleanly
+  // instead of throwing "Extension context invalidated" on every mutation.
+  function extensionAlive() {
+    try {
+      return !!(chrome.runtime && chrome.runtime.id);
+    } catch {
+      return false;
+    }
+  }
+  let toreDown = false;
+  function teardownStale() {
+    if (toreDown) return;
+    toreDown = true;
+    // console.log (not warn) — this is an expected, controlled shutdown of
+    // a stale content script; keep it out of the chrome://extensions Errors
+    // panel. It still prints to the page console for debugging.
+    console.log(
+      '[Unipeg Lens] extension context invalidated — myupeg.js stopping; reload the tab'
+    );
+    enabled = false;
+    armed = false;
+    if (observer) observer.disconnect();
+    clearTimeout(scanTimer);
+    clearTimeout(confirmTimer);
+    clearStars();
+    removeRarityBox();
+    if (toggleEl) toggleEl.remove();
+  }
+
   function scan() {
+    if (toreDown) return;
+    if (!extensionAlive()) {
+      teardownStale();
+      return;
+    }
     if (!enabled) return;
     for (const dl of findPartsLists()) applyStars(dl);
     ensureSelection();
@@ -603,11 +616,12 @@
     scan();
   });
   // The panels render late and re-render on every card / seed change.
-  new MutationObserver(scheduleScan).observe(document.body, {
+  observer = new MutationObserver(scheduleScan);
+  observer.observe(document.body, {
     childList: true,
     subtree: true,
     characterData: true,
   });
 
-  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.0)');
+  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.1)');
 })();
