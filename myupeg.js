@@ -31,7 +31,8 @@
   const PARTS_REPEAT = 5;     // fire alone when 5+ parts share one number
   const COLOR_REPEAT = 4;     // fire alone when 4+ colors share one hexcode
   const AUTODRAW_MT_TIER = 12; // fire alone when the uPEG hits Mine Tier 12
-  const AUTODRAW_RANK_LIMIT = 30; // OR/MR rank gate (inclusive: rank ≤ this)
+  const AUTODRAW_RANK_LIMIT = 30; // #2 — OR & MR rank gate (both ranks ≤ this)
+  const AUTODRAW_COLOR_OR_LIMIT = 1000; // #4 — OR gate paired with 4+ colour stack (≤)
   // Trait values can take ~1s to finish rendering after a uPEG switch —
   // never draw until the panel data has held still this long.
   const SETTLE_MS = 800;
@@ -227,13 +228,16 @@
       reason = '部件 ' + PARTS_REPEAT + '+ 个相同数字';
     } else if (
       colorRepeat >= COLOR_REPEAT &&
-      rar && rar.orRank <= AUTODRAW_RANK_LIMIT
+      rar && rar.orRank <= AUTODRAW_COLOR_OR_LIMIT
     ) {
-      // Colour stack AND a top OR rank — colour repetition alone isn't
-      // distinctive enough; the OR gate keeps this signal selective.
+      // Colour stack AND a reasonably-rare OR uPEG — empirically the sweet
+      // spot for surfacing "great" uPEGs (user-calibrated against owned
+      // uPEGs). Colour repetition alone isn't selective enough; the OR
+      // gate (looser than the #2 top-30 gate) keeps it focused without
+      // being too strict.
       reason =
         '颜色 ' + COLOR_REPEAT + '+ 个相同 hexcode 且 OR ≤ ' +
-        AUTODRAW_RANK_LIMIT + '（OR #' + rar.orRank + '）';
+        AUTODRAW_COLOR_OR_LIMIT + '（OR #' + rar.orRank + '）';
     }
     // Fingerprint of exactly the data this decision rested on.
     const fingerprint = JSON.stringify([
@@ -629,5 +633,5 @@
     characterData: true,
   });
 
-  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.2)');
+  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.3)');
 })();
