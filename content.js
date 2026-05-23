@@ -431,5 +431,5 @@
     subtree: true,
   });
 
-  console.log('[Unipeg Lens] content script active (v1.3.1)');
+  console.log('[Unipeg Lens] content script active (v1.3.2)');
 })();
