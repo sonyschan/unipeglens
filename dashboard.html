@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unipeg Lens — Traits & Colors</title>
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png">
+<link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png">
+<style>
+  :root {
+    --accent: #C061AE;
+    --accent-soft: rgba(192, 97, 174, 0.12);
+    --bg: #fafafa;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px 24px 64px;
+  }
+
+  header { margin-bottom: 16px; }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  header .meta {
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  header .meta b { color: var(--text); font-weight: 600; }
+  header .meta-updated {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 22px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  .notable-label {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .notable-pills { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+  .notable-pill {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .notable-pill:hover { background: #f3f4f6; }
+  .notable-pill.active {
+    background: var(--accent-soft);
+    border-color: rgba(192, 97, 174, 0.45);
+    color: #7a2c6e;
+  }
+  .notable-pill .count {
+    color: var(--muted);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .notable-pill.active .count { color: #7a2c6e; }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 8px;
+    background: var(--accent-soft);
+    color: #7a2c6e;
+    border: 1px solid rgba(192, 97, 174, 0.35);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .filter-chip::after {
+    content: "×";
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.6;
+    margin-left: 2px;
+  }
+  .filter-chip:hover::after { opacity: 1; }
+  .filter-chip .dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+    display: inline-block;
+  }
+
+  .controls .spacer { flex: 1; }
+  .btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .btn:hover { background: #f3f4f6; }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 1100px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px 8px;
+    box-shadow: var(--shadow);
+  }
+  .panel > h2 {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .group { padding: 14px 0; border-top: 1px solid var(--border); }
+  .group:first-of-type { border-top: 0; }
+  .group h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .bars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: stretch;
+  }
+  .bar {
+    position: relative;
+    min-width: 44px;
+    padding: 6px 8px 5px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.1;
+    font: inherit;
+    color: inherit;
+    transition: transform 0.06s ease;
+  }
+  .bar:hover { transform: translateY(-1px); }
+  .bar.empty { opacity: 0.45; }
+  .bar.selected {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .bar__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 1px;
+  }
+  .bar__count {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .swatch {
+    width: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden;
+    text-align: center;
+    line-height: 1.1;
+    font: inherit;
+    color: inherit;
+    transition: transform 0.06s ease;
+  }
+  .swatch:hover { transform: translateY(-1px); }
+  .swatch.empty { opacity: 0.35; }
+  .swatch.selected {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .swatch__color {
+    display: block;
+    width: 100%;
+    height: 28px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .swatch__count {
+    display: block;
+    padding: 3px 2px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Matching uPEGs */
+  .results {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .results h2 {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .results__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .sort-pills { display: inline-flex; gap: 4px; }
+  .sort-pill {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .sort-pill:hover { color: var(--text); }
+  .sort-pill.active {
+    background: var(--text);
+    color: #fff;
+    border-color: var(--text);
+  }
+  .results .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  .matches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .match {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.08s ease;
+  }
+  .match:hover { background: #f3f4f6; }
+  .match__id { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .match__rank {
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .match__lvl {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #f3f4f6;
+    color: var(--muted);
+  }
+  .match__lvl[data-lvl="2"] { background: #fde68a; color: #7c5a00; }
+  .match__lvl[data-lvl="3"] { background: #fbcfe8; color: #831843; }
+  .match__lvl[data-lvl="4"] { background: #c7d2fe; color: #3730a3; }
+
+  .more-row {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  /* Footer */
+  footer.site-footer {
+    margin-top: 32px;
+    padding: 18px 4px 4px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer.site-footer b { color: var(--text); font-weight: 600; }
+  footer.site-footer .links {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+  }
+  footer.site-footer a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1px;
+  }
+  footer.site-footer a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+
+  .match__listing {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .match__listing .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .match__listing .dot--p2peg   { background: #C061AE; }
+  .match__listing .dot--opensea { background: #0086FF; }
+
+  /* Modal */
+  [hidden] { display: none !important; }
+  .backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: grid; place-items: center;
+    z-index: 1000;
+    animation: fade 0.12s ease-out;
+  }
+  @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+  .modal {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px;
+    width: min(560px, 94vw);
+    max-height: 92vh;
+    overflow: auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .modal__close {
+    position: absolute; top: 8px; right: 12px;
+    background: none; border: 0; font-size: 24px;
+    color: var(--muted); cursor: pointer; padding: 4px 8px;
+  }
+  .modal__close:hover { color: var(--text); }
+  .modal__art {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #f3f4f6;
+    border-radius: 12px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+  }
+  .modal__art svg { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+  .modal__art .loading { color: var(--muted); font-size: 13px; }
+  .modal__title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 22px; font-weight: 700;
+    margin: 0 0 6px;
+  }
+  .modal__sub {
+    color: var(--muted); font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 14px;
+  }
+  .listings { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .listing {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card);
+  }
+  .listing__src {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 13px;
+  }
+  .listing__src .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .listing__src .dot--p2peg   { background: #C061AE; }
+  .listing__src .dot--opensea { background: #0086FF; }
+  .listing__price {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700; font-size: 14px;
+  }
+  .listing__bundle {
+    color: var(--muted); font-weight: 500; font-size: 11px; margin-left: 6px;
+  }
+  .listing__buy {
+    text-decoration: none; color: #fff;
+    padding: 6px 12px; border-radius: 8px;
+    font-weight: 700; font-size: 12px;
+  }
+  .listing__buy--p2peg   { background: #C061AE; color: #000; }
+  .listing__buy--opensea { background: #0086FF; }
+  .listing__none {
+    color: var(--muted); font-size: 13px;
+    text-align: center; padding: 14px 0;
+    border: 1px dashed var(--border); border-radius: 10px;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .meta-grid > span:nth-child(odd) { color: var(--muted); }
+  .meta-grid > span:nth-child(even) {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .modal__actions { display: flex; gap: 8px; }
+  .modal__actions a {
+    flex: 1; text-align: center;
+    text-decoration: none;
+    padding: 9px; border-radius: 8px;
+    font-weight: 600; font-size: 12px;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .modal__actions a:hover { background: #f3f4f6; }
+
+  /* Loading / error */
+  .splash {
+    margin: 60px auto;
+    max-width: 560px;
+    padding: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .splash pre {
+    text-align: left;
+    background: #0f172a;
+    color: #f3f4f6;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    overflow: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Unipeg Lens</h1>
+  <div class="meta" id="meta">Loading data/upegs_full.json…</div>
+</header>
+
+<div class="controls" id="controls" hidden>
+  <span class="notable-label">Notable:</span>
+  <div class="notable-pills" id="notable-pills"></div>
+  <div id="active-filters" style="display:contents"></div>
+  <span class="spacer"></span>
+  <button class="btn" id="reset">Reset</button>
+</div>
+
+<div id="app" hidden>
+  <main>
+    <section class="panel">
+      <h2>Traits</h2>
+      <div id="traits"></div>
+    </section>
+    <section class="panel">
+      <h2>Colors</h2>
+      <div id="colors"></div>
+    </section>
+  </main>
+  <section class="results">
+    <div class="results__head">
+      <h2>Matching uPEGs <span id="match-meta" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted)"></span></h2>
+      <div class="sort-pills" id="sort-pills"></div>
+    </div>
+    <div id="matches"></div>
+  </section>
+</div>
+
+<div id="splash" class="splash" hidden></div>
+
+<footer class="site-footer">
+  <div>
+    Created by the <b>Unipeg community</b>
+    <span style="margin: 0 6px">·</span>
+    not affiliated with the official Unipeg team
+  </div>
+  <div class="links">
+    <a href="https://x.com/h2crypto_eth" target="_blank" rel="noopener noreferrer">Feedback</a>
+    <a href="https://github.com/sonyschan/unipeglens" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+</footer>
+
+<div id="backdrop" class="backdrop" hidden></div>
+
+<script>
+const TRAIT_DEFS = [
+  { key: 'legsBack',    label: 'Back Legs',   noNone: true  },
+  { key: 'legsFront',   label: 'Front Legs',  noNone: true  },
+  { key: 'hair',        label: 'Hair',        noNone: false },
+  { key: 'horn',        label: 'Horn',        noNone: false },
+  { key: 'wings',       label: 'Wings',       noNone: false },
+  { key: 'tail',        label: 'Tail',        noNone: false },
+  { key: 'accessories', label: 'Accessories', noNone: false },
+];
+const FULLSET_KEYS = ['hair', 'horn', 'wings', 'tail', 'accessories'];
+
+// Notable sets — predicates run against a single uPEG record.
+const NOTABLE_DEFS = [
+  { key: 'fullSet',      label: 'Full set',      test: u => FULLSET_KEYS.every(k => (u.metadata?.[k] || 0) !== 0) },
+  { key: 'naked',        label: 'Naked',         test: u => FULLSET_KEYS.every(k => (u.metadata?.[k] || 0) === 0) },
+  { key: 'bichrome',     label: 'Bichrome',      test: u => u.nDistinctColors === 2 },
+  { key: 'trichrome',    label: 'Trichrome',     test: u => u.nDistinctColors === 3 },
+  { key: 'fullSpectrum', label: 'Full spectrum', test: u => u.nDistinctColors === 7 },
+];
+const COLOR_SLOTS = [
+  { key: 'backGroundColor',  label: 'Background'  },
+  { key: 'bodyColor',        label: 'Body'        },
+  { key: 'eyesColor',        label: 'Eyes'        },
+  { key: 'hairColor',        label: 'Hair'        },
+  { key: 'hornColor',        label: 'Horn'        },
+  { key: 'tailColor',        label: 'Tail'        },
+  { key: 'accessoriesColor', label: 'Accessories' },
+  { key: 'groundColor',      label: 'Ground'      },
+];
+const MAX_MATCHES = 120;
+
+let DATA = [];
+let DATA_FETCHED_AT = null;
+let PALETTES = {};       // { bodyColor: { 25: '#cee6f3', ... }, ... }
+let LISTINGS = { byUpegId: {}, fetchedAt: null, p2pegCount: 0, openseaCount: 0 };
+let FILTERS = { notable: new Set(), traits: {}, colors: {} };
+let SORT = 'newest';   // 'newest' (id desc) | 'oldest' (id asc) | 'price' (cheapest first; unlisted at end)
+function cheapestPriceWei(id) {
+  const ls = LISTINGS.byUpegId[id];
+  if (!ls || !ls.length) return null;
+  let min = null;
+  for (const l of ls) {
+    const p = BigInt(l.priceWei);
+    if (min === null || p < min) min = p;
+  }
+  return min;
+}
+const SORTS = [
+  { key: 'newest', label: 'Newest', cmp: (a, b) => Number(b.id) - Number(a.id) },
+  { key: 'oldest', label: 'Oldest', cmp: (a, b) => Number(a.id) - Number(b.id) },
+  { key: 'price',  label: 'Price',  cmp: (a, b) => {
+    const ap = cheapestPriceWei(a.id);
+    const bp = cheapestPriceWei(b.id);
+    if (ap === null && bp === null) return Number(b.id) - Number(a.id);
+    if (ap === null) return 1;   // unlisted goes to the end
+    if (bp === null) return -1;
+    return ap < bp ? -1 : ap > bp ? 1 : Number(b.id) - Number(a.id);
+  }},
+];
+const ART_CACHE = new Map();   // seed -> svg string (in-memory only)
+
+async function load() {
+  try {
+    const r = await fetch('data/upegs_full.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    DATA = d.items || [];
+    DATA_FETCHED_AT = d.fetchedAt || null;
+  } catch (e) {
+    showSplash(`
+      <h2 style="margin-top:0">Couldn't load <code>data/upegs_full.json</code></h2>
+      <p>Most likely you opened <code>dashboard.html</code> from <code>file://</code>, which Chrome blocks for fetch. From the project root, run:</p>
+      <pre>python3 -m http.server 8000</pre>
+      <p>then open <a href="http://localhost:8000/dashboard.html">http://localhost:8000/dashboard.html</a>.</p>
+      <p style="color:var(--muted);font-size:12px">Underlying error: ${escapeHtml(e.message)}</p>
+    `);
+    return;
+  }
+  // Listings are optional — dashboard still works without them.
+  try {
+    const r = await fetch('data/listings.json');
+    if (r.ok) LISTINGS = await r.json();
+  } catch {}
+  buildPalettes();
+  document.getElementById('controls').hidden = false;
+  document.getElementById('app').hidden = false;
+  render();
+}
+
+function showSplash(html) {
+  const el = document.getElementById('splash');
+  el.innerHTML = html;
+  el.hidden = false;
+  document.getElementById('meta').textContent = '';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+function buildPalettes() {
+  for (const { key } of COLOR_SLOTS) PALETTES[key] = {};
+  for (const u of DATA) {
+    const m = u.metadata || {};
+    const c = u.colors || {};
+    for (const { key } of COLOR_SLOTS) {
+      const idx = m[key];
+      const hex = c[key];
+      if (hex && idx != null && PALETTES[key][idx] == null) {
+        PALETTES[key][idx] = hex;
+      }
+    }
+  }
+}
+
+function getFiltered() {
+  return DATA.filter(u => {
+    const m = u.metadata || {};
+    for (const key of FILTERS.notable) {
+      const def = NOTABLE_DEFS.find(d => d.key === key);
+      if (def && !def.test(u)) return false;
+    }
+    for (const [k, v] of Object.entries(FILTERS.traits)) {
+      if (m[k] !== v) return false;
+    }
+    for (const [k, v] of Object.entries(FILTERS.colors)) {
+      if (m[k] !== v) return false;
+    }
+    return true;
+  });
+}
+
+function countBy(items, getter) {
+  const out = new Map();
+  for (const x of items) {
+    const k = getter(x);
+    out.set(k, (out.get(k) ?? 0) + 1);
+  }
+  return out;
+}
+
+// rare = vivid pink, common = soft pink. Empty = light gray.
+function rarityBg(count, max) {
+  if (!count) return '#f3f4f6';
+  const ratio = count / max;             // 1 = most common
+  const intensity = 1 - ratio;           // 1 = rarest
+  const alpha = 0.10 + 0.55 * intensity; // 0.10 .. 0.65
+  return `rgba(192, 97, 174, ${alpha.toFixed(3)})`;
+}
+
+function fmtTs(unixSec) {
+  if (!unixSec) return '—';
+  const d = new Date(unixSec * 1000);
+  // YYYY-MM-DD HH:MM in local time
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function render() {
+  const filtered = getFiltered();
+  const meta = document.getElementById('meta');
+  const total = DATA.length.toLocaleString();
+  const shown = filtered.length.toLocaleString();
+  meta.innerHTML =
+    `<b>${shown}</b> of <b>${total}</b> uPEGs (twins excluded)` +
+    `<div class="meta-updated">` +
+      `Data <span title="from data/upegs_full.json">${fmtTs(DATA_FETCHED_AT)}</span>` +
+      ` · Listings <span title="from data/listings.json">${fmtTs(LISTINGS.fetchedAt)}</span>` +
+    `</div>`;
+  renderNotablePills();
+  renderTraits(filtered);
+  renderColors(filtered);
+  renderActiveFilters();
+  renderMatches(filtered);
+}
+
+function renderSortPills() {
+  const root = document.getElementById('sort-pills');
+  root.innerHTML = '';
+  for (const s of SORTS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sort-pill' + (SORT === s.key ? ' active' : '');
+    btn.textContent = s.label;
+    btn.onclick = () => { SORT = s.key; render(); };
+    root.appendChild(btn);
+  }
+}
+
+function renderNotablePills() {
+  const root = document.getElementById('notable-pills');
+  root.innerHTML = '';
+  for (const def of NOTABLE_DEFS) {
+    const count = DATA.reduce((n, u) => n + (def.test(u) ? 1 : 0), 0);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'notable-pill' + (FILTERS.notable.has(def.key) ? ' active' : '');
+    btn.innerHTML = `${def.label}<span class="count">${count.toLocaleString()}</span>`;
+    btn.title = `${def.label} — ${count} uPEGs`;
+    btn.onclick = () => {
+      if (FILTERS.notable.has(def.key)) FILTERS.notable.delete(def.key);
+      else FILTERS.notable.add(def.key);
+      render();
+    };
+    root.appendChild(btn);
+  }
+}
+
+function renderTraits(filtered) {
+  const root = document.getElementById('traits');
+  root.innerHTML = '';
+  for (const t of TRAIT_DEFS) {
+    const counts = countBy(filtered, u => u.metadata?.[t.key] ?? 0);
+    const values = t.noNone
+      ? [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+      : [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+    const max = Math.max(1, ...values.map(v => counts.get(v) ?? 0));
+    const sec = document.createElement('div');
+    sec.className = 'group';
+    sec.innerHTML = `<h3>${t.label}</h3><div class="bars"></div>`;
+    const bars = sec.querySelector('.bars');
+    for (const v of values) {
+      const c = counts.get(v) ?? 0;
+      const pct = filtered.length ? (100 * c / filtered.length).toFixed(1) : '0.0';
+      const sel = FILTERS.traits[t.key] === v;
+      const bar = document.createElement('button');
+      bar.className = 'bar' + (sel ? ' selected' : '') + (c === 0 ? ' empty' : '');
+      bar.style.background = rarityBg(c, max);
+      bar.title = `${t.label} = ${v === 0 ? 'None' : v} → ${c} (${pct}%)`;
+      bar.innerHTML = `<span class="bar__label">${v === 0 ? 'None' : v}</span><span class="bar__count">${c}</span>`;
+      bar.onclick = () => {
+        if (FILTERS.traits[t.key] === v) delete FILTERS.traits[t.key];
+        else FILTERS.traits[t.key] = v;
+        render();
+      };
+      bars.appendChild(bar);
+    }
+    root.appendChild(sec);
+  }
+}
+
+function renderColors(filtered) {
+  const root = document.getElementById('colors');
+  root.innerHTML = '';
+  for (const slot of COLOR_SLOTS) {
+    const counts = countBy(filtered, u => u.metadata?.[slot.key] ?? -1);
+    const indices = Object.keys(PALETTES[slot.key]).map(Number).sort((a, b) => a - b);
+    const sec = document.createElement('div');
+    sec.className = 'group';
+    sec.innerHTML = `<h3>${slot.label}</h3><div class="swatches"></div>`;
+    const sw = sec.querySelector('.swatches');
+    for (const i of indices) {
+      const c = counts.get(i) ?? 0;
+      const hex = PALETTES[slot.key][i];
+      const pct = filtered.length ? (100 * c / filtered.length).toFixed(1) : '0.0';
+      const sel = FILTERS.colors[slot.key] === i;
+      const btn = document.createElement('button');
+      btn.className = 'swatch' + (sel ? ' selected' : '') + (c === 0 ? ' empty' : '');
+      btn.title = `${slot.label} ${hex} → ${c} (${pct}%)`;
+      btn.innerHTML = `
+        <span class="swatch__color" style="background:${hex}"></span>
+        <span class="swatch__count">${c}</span>
+      `;
+      btn.onclick = () => {
+        if (FILTERS.colors[slot.key] === i) delete FILTERS.colors[slot.key];
+        else FILTERS.colors[slot.key] = i;
+        render();
+      };
+      sw.appendChild(btn);
+    }
+    root.appendChild(sec);
+  }
+}
+
+function renderActiveFilters() {
+  const root = document.getElementById('active-filters');
+  root.innerHTML = '';
+  // Notable-set chips are already rendered as pills; no need to repeat here.
+  for (const [k, v] of Object.entries(FILTERS.traits)) {
+    const t = TRAIT_DEFS.find(x => x.key === k);
+    const chip = mkChip(`${t.label} = ${v === 0 ? 'None' : v}`);
+    chip.onclick = () => { delete FILTERS.traits[k]; render(); };
+    root.appendChild(chip);
+  }
+  for (const [k, v] of Object.entries(FILTERS.colors)) {
+    const slot = COLOR_SLOTS.find(x => x.key === k);
+    const hex = PALETTES[k][v];
+    const chip = mkChip(slot.label);
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.style.background = hex;
+    chip.insertBefore(dot, chip.firstChild);
+    const code = document.createElement('span');
+    code.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+    code.style.fontSize = '11px';
+    code.textContent = hex;
+    chip.appendChild(code);
+    chip.onclick = () => { delete FILTERS.colors[k]; render(); };
+    root.appendChild(chip);
+  }
+}
+
+function mkChip(text) {
+  const el = document.createElement('span');
+  el.className = 'filter-chip';
+  el.appendChild(document.createTextNode(text));
+  return el;
+}
+
+function renderMatches(filtered) {
+  renderSortPills();
+  const matches = document.getElementById('matches');
+  const meta = document.getElementById('match-meta');
+  if (!filtered.length) {
+    matches.innerHTML = `<div class="empty">No uPEGs match the current filters.</div>`;
+    meta.textContent = '';
+    return;
+  }
+  const sortDef = SORTS.find(s => s.key === SORT) || SORTS[0];
+  const sorted = [...filtered].sort(sortDef.cmp);
+  const top = sorted.slice(0, MAX_MATCHES);
+  const listedCount = filtered.reduce((n, u) => n + (LISTINGS.byUpegId[u.id] ? 1 : 0), 0);
+  meta.textContent =
+    `— top ${top.length} of ${filtered.length.toLocaleString()} (${sortDef.label.toLowerCase()}` +
+    (LISTINGS.fetchedAt ? `, ${listedCount} listed` : '') + `)`;
+  const grid = document.createElement('div');
+  grid.className = 'matches';
+  for (const u of top) {
+    const card = document.createElement('button');
+    card.className = 'match';
+    card.style.cursor = 'pointer';
+    card.style.font = 'inherit';
+    card.style.color = 'inherit';
+    card.style.background = 'var(--card)';
+    const ls = LISTINGS.byUpegId[u.id] || [];
+    const cheapest = ls.length
+      ? ls.reduce((a, b) => (BigInt(a.priceWei) <= BigInt(b.priceWei) ? a : b))
+      : null;
+    const listingHtml = cheapest
+      ? `<span class="match__listing" title="Listed on ${cheapest.source}">
+           <span class="dot dot--${cheapest.source}"></span>
+           ${fmtEth(cheapest.priceWei)} Ξ
+         </span>`
+      : '';
+    card.innerHTML = `
+      <span>
+        <span class="match__id">#${u.id}</span>
+        ${listingHtml}
+      </span>
+    `;
+    card.onclick = () => openModal(u);
+    grid.appendChild(card);
+  }
+  matches.innerHTML = '';
+  matches.appendChild(grid);
+  if (filtered.length > MAX_MATCHES) {
+    const more = document.createElement('div');
+    more.className = 'more-row';
+    more.textContent = `…${(filtered.length - MAX_MATCHES).toLocaleString()} more not shown`;
+    matches.appendChild(more);
+  }
+}
+
+// ---------- modal ----------
+
+function fmtEth(wei) {
+  try {
+    const eth = Number(BigInt(wei)) / 1e18;
+    if (!isFinite(eth)) return '?';
+    if (eth >= 100) return eth.toFixed(0);
+    if (eth >= 10)  return eth.toFixed(1);
+    return eth.toFixed(3);
+  } catch {
+    return '?';
+  }
+}
+function shortAddr(a) { return a ? `${a.slice(0,6)}…${a.slice(-4)}` : ''; }
+
+async function fetchArt(seed) {
+  if (ART_CACHE.has(seed)) return ART_CACHE.get(seed);
+  const r = await fetch(`https://server.unipeg.art/api/art/${seed}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const j = await r.json();
+  const svg = j.svg || '';
+  ART_CACHE.set(seed, svg);
+  return svg;
+}
+
+function buyUrl(listing, fallbackUpegId) {
+  if (listing.source === 'opensea') {
+    const tokenId = listing.tokenId || listing.upegIds?.[0] || fallbackUpegId;
+    return `https://opensea.io/assets/ethereum/0xfd7db13b002f927891ab20ebbca890c1b5a459fd/${tokenId}`;
+  }
+  return `https://p2peg.app/collections/unipeg?trade=${encodeURIComponent(listing.id)}`;
+}
+
+function openModal(u) {
+  const back = document.getElementById('backdrop');
+  const listings = LISTINGS.byUpegId[u.id] || [];
+  const sortedLs = [...listings].sort((a, b) => {
+    try { return Number(BigInt(a.priceWei) - BigInt(b.priceWei)); } catch { return 0; }
+  });
+  back.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal__close" aria-label="Close">×</button>
+      <div class="modal__art" id="modal-art"><span class="loading">Loading SVG…</span></div>
+      <h2 class="modal__title">uPEG #${u.id}</h2>
+      <div class="modal__sub">
+        owner ${escapeHtml(shortAddr(u.owner || ''))}
+      </div>
+      <div class="listings" id="modal-listings"></div>
+      <div class="meta-grid"></div>
+      <div class="modal__actions">
+        <a href="https://unipeg.art/upeg/${u.id}" target="_blank" rel="noopener noreferrer">View on unipeg.art →</a>
+        <a href="https://etherscan.io/address/${u.owner || ''}" target="_blank" rel="noopener noreferrer">Owner on Etherscan →</a>
+      </div>
+    </div>
+  `;
+  back.hidden = false;
+
+  const lsEl = back.querySelector('#modal-listings');
+  if (sortedLs.length === 0) {
+    lsEl.innerHTML = `<div class="listing__none">Not currently listed${LISTINGS.fetchedAt ? ` (as of ${new Date(LISTINGS.fetchedAt*1000).toLocaleString()})` : ''}</div>`;
+  } else {
+    for (const l of sortedLs) {
+      const eth = fmtEth(l.priceWei);
+      const bundle = l.upegCount > 1 ? ` <span class="listing__bundle">+ ${l.upegCount - 1} more in bundle</span>` : '';
+      const srcName = l.source === 'opensea' ? 'OpenSea' : 'p2peg';
+      const row = document.createElement('div');
+      row.className = 'listing';
+      row.innerHTML = `
+        <span class="listing__src">
+          <span class="dot dot--${l.source}"></span>
+          ${srcName}${bundle}
+        </span>
+        <span style="display:flex;align-items:center;gap:10px">
+          <span class="listing__price">${eth} Ξ</span>
+          <a class="listing__buy listing__buy--${l.source}" href="${buyUrl(l, u.id)}" target="_blank" rel="noopener noreferrer">Buy →</a>
+        </span>
+      `;
+      lsEl.appendChild(row);
+    }
+  }
+
+  // Trait + color summary
+  const grid = back.querySelector('.meta-grid');
+  const m = u.metadata || {};
+  for (const t of TRAIT_DEFS) {
+    const v = m[t.key];
+    grid.innerHTML += `<span>${t.label}</span><span>${v === 0 || v == null ? 'None' : v}</span>`;
+  }
+  for (const slot of COLOR_SLOTS) {
+    const idx = m[slot.key];
+    const hex = (u.colors || {})[slot.key] || PALETTES[slot.key]?.[idx];
+    if (!hex) continue;
+    grid.innerHTML += `<span>${slot.label} color</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15);background:${hex}"></span>${hex}</span>`;
+  }
+
+  // Wire close
+  back.querySelector('.modal__close').onclick = closeModal;
+  back.onclick = e => { if (e.target === back) closeModal(); };
+  document.addEventListener('keydown', onKey);
+
+  // Lazy-load the art
+  fetchArt(u.seed).then(svg => {
+    const a = document.getElementById('modal-art');
+    if (a) a.innerHTML = svg;
+  }).catch(e => {
+    const a = document.getElementById('modal-art');
+    if (a) a.innerHTML = `<span class="loading">Couldn't load art: ${escapeHtml(e.message)}</span>`;
+  });
+}
+
+function closeModal() {
+  const back = document.getElementById('backdrop');
+  back.hidden = true;
+  back.innerHTML = '';
+  document.removeEventListener('keydown', onKey);
+}
+function onKey(e) { if (e.key === 'Escape') closeModal(); }
+
+document.getElementById('reset').onclick = () => {
+  FILTERS = { notable: new Set(), traits: {}, colors: {} };
+  render();
+};
+
+load();
+</script>
+</body>
+</html>

@@ -2,3 +2,5 @@
 .claude/
 *.log
 icons/icon-master.png
+data/
+.env
