@@ -32,8 +32,14 @@
   const COLOR_REPEAT = 4;     // fire alone when 4+ colors share one hexcode
   const AUTODRAW_MT_TIER = 12; // fire alone when the uPEG hits Mine Tier 12
   const AUTODRAW_RANK_LIMIT = 30; // #2 — OR & MR rank gate (both ranks ≤ this)
-  const AUTODRAW_COLOR_OR_LIMIT = 1000; // #4 — OR gate paired with 4+ colour stack (≤)
-  const AUTODRAW_COLOR_TT_MIN = 2; // #4 — also require 2+ parts sharing one number (TT)
+  const AUTODRAW_COLOR_OR_LIMIT = 180; // #4 — OR gate paired with 4+ colour stack (≤)
+  const AUTODRAW_COLOR_TT_MIN = 3; // #4 — also require 3+ parts sharing one number (TT)
+  const AUTODRAW_COLOR_ELEMENT = 'lightning'; // #4 — also require the card's element be ⚡lightning
+  // #5 — parts-led stack: 3+ colour stack AND 4+ parts (TT) AND OR ≤ 180.
+  // No element or MR gate (looser on colour/element than #4, stricter on TT).
+  const AUTODRAW_C5_COLOR_MIN = 3;  // #5 — 3+ colours sharing one hexcode
+  const AUTODRAW_C5_TT_MIN = 4;     // #5 — 4+ parts sharing one number (TT)
+  const AUTODRAW_C5_OR_LIMIT = 180; // #5 — OR gate (≤)
   // Trait values can take ~1s to finish rendering after a uPEG switch —
   // never draw until the panel data has held still this long.
   const SETTLE_MS = 800;
@@ -207,9 +213,19 @@
 
     let reason = null;
     // Rarity signals from the background — `lastRarityResult` is the
-    // scoreCandidate response (an object once it has answered).
+    // scoreCandidate response (an object once it has answered). It is async
+    // and tracked by a SEPARATE fingerprint (lastRarityFp) than the live
+    // parts/colors above, so it can lag a uPEG switch and hold the PREVIOUS
+    // candidate's result (e.g. during a partial render where readPanelTraits
+    // returns null and updateRarityPanel never clears it). Trust `rar` only
+    // when its committed fingerprint matches the panel we're judging now —
+    // otherwise a stale element/orRank/mrTier could fire a draw on the wrong
+    // card (the forest-drawn-as-lightning bug).
+    const curRarityFp = JSON.stringify([readPanelTraits(), readPanelColors()]);
     const rar =
-      lastRarityResult && typeof lastRarityResult === 'object'
+      lastRarityFp === curRarityFp &&
+      lastRarityResult &&
+      typeof lastRarityResult === 'object'
         ? lastRarityResult
         : null;
     if (rar && rar.mrTier === AUTODRAW_MT_TIER) {
@@ -230,19 +246,32 @@
     } else if (
       colorRepeat >= COLOR_REPEAT &&
       partsRepeat >= AUTODRAW_COLOR_TT_MIN &&
-      rar && rar.orRank <= AUTODRAW_COLOR_OR_LIMIT
+      rar && rar.orRank <= AUTODRAW_COLOR_OR_LIMIT &&
+      rar.element === AUTODRAW_COLOR_ELEMENT
     ) {
-      // Colour stack AND a parts stack AND a reasonably-rare OR uPEG —
-      // empirically the sweet spot for surfacing "great" uPEGs (user-
-      // calibrated against owned uPEGs). Colour repetition alone isn't
-      // selective enough; pairing it with a 2+ parts (TT) stack and the
-      // OR gate (looser than the #2 top-30 gate) keeps it focused without
-      // being too strict.
+      // Colour stack AND a parts stack AND a top-OR uPEG AND the ⚡lightning
+      // element — empirically the sweet spot for surfacing "great" uPEGs
+      // (user-calibrated against owned uPEGs). Colour repetition alone isn't
+      // selective enough; pairing it with a 3+ parts (TT) stack, the tight
+      // OR ≤ 180 gate, and the lightning-only element gate keeps it focused.
       reason =
         '颜色 ' + COLOR_REPEAT + '+ 个相同 hexcode 且 部件 ' +
         AUTODRAW_COLOR_TT_MIN + '+ 个相同数字 且 OR ≤ ' +
-        AUTODRAW_COLOR_OR_LIMIT + '（OR #' + rar.orRank +
-        ' / TT ' + partsRepeat + '）';
+        AUTODRAW_COLOR_OR_LIMIT + ' 且 属性=⚡' + AUTODRAW_COLOR_ELEMENT +
+        '（OR #' + rar.orRank + ' / TT ' + partsRepeat + '）';
+    } else if (
+      colorRepeat >= AUTODRAW_C5_COLOR_MIN &&
+      partsRepeat >= AUTODRAW_C5_TT_MIN &&
+      rar && rar.orRank <= AUTODRAW_C5_OR_LIMIT
+    ) {
+      // Parts-led variant of #4: a strong 4+ parts (TT) stack carries the
+      // signal, so the colour bar drops to 3+ and the element gate is gone —
+      // but the tight OR ≤ 180 gate keeps it to genuinely rare uPEGs. Any
+      // element qualifies here (unlike #4's lightning-only gate).
+      reason =
+        '颜色 ' + AUTODRAW_C5_COLOR_MIN + '+ 个相同 hexcode 且 部件 ' +
+        AUTODRAW_C5_TT_MIN + '+ 个相同数字 且 OR ≤ ' + AUTODRAW_C5_OR_LIMIT +
+        '（OR #' + rar.orRank + ' / TT ' + partsRepeat + '）';
     }
     // Fingerprint of exactly the data this decision rested on.
     const fingerprint = JSON.stringify([
@@ -389,6 +418,15 @@
 
   let lastRarityFp = '';       // fingerprint of the last-scored candidate
   let lastRarityResult = null; // cached score response for that fingerprint
+  // Display settle gate: the 部件 rows update one-at-a-time on a candidate
+  // switch, so a scan can read a half-updated panel (some rows still the
+  // previous candidate's) — a mixed fingerprint that scores to a wrong,
+  // often rarer rank. Like auto-draw, require the panel fingerprint to hold
+  // still for SETTLE_MS before we score/show it, so the box never flashes a
+  // rank that doesn't belong to the uPEG actually on screen.
+  let pendingRarityFp = '';    // fingerprint awaiting the settle window
+  let pendingRaritySince = 0;  // when that fingerprint was first seen
+  let rarityConfirmTimer = null; // re-checks once the panel goes quiet
 
   // The 7 部件 rows as { traitKey: index } — null until all 7 have rendered.
   function readPanelTraits() {
@@ -469,18 +507,51 @@
       // MineRarity chip = the Mine Tier (1-12); colour follows the
       // UR/SSR/SR/R band the tier falls in.
       const mtKind = (state.mrTierLabel || '').toLowerCase();
+      // Battle-card badges, order TT → OR → CT (= ATK / 暴击 / DEF):
+      //   TT 特征撞值 (ATK) — largest trait collision group.
+      //   OR OpenRarity 稀有度 (1-5, drives crit) — uPEGDuel's openRarityTierNum.
+      //   CT 颜色撞值 (DEF) — largest colour collision group.
+      // TT/CT larger = rarer collision; OR5 = rarest. Shown once scored.
+      const battle = (state.ttMax || state.ctMax || state.orStat)
+        ? '<div class="upeg-rarity-box__row">' +
+            '<span class="upeg-rarity-box__k">战卡 ATK / 暴击 / DEF</span>' +
+            '<span class="upeg-rarity-box__v">' +
+              `<em class="upeg-rarity-box__bt upeg-rarity-box__bt--atk">TT${state.ttMax || 0}</em>` +
+              `<em class="upeg-rarity-box__bt upeg-rarity-box__bt--or">OR${state.orStat || 1}</em>` +
+              `<em class="upeg-rarity-box__bt upeg-rarity-box__bt--def">CT${state.ctMax || 0}</em>` +
+            '</span></div>'
+        : '';
+      // Element row — the TCG combat class inferred from the body hex
+      // (upstream's COLOR_ELEMENT, computed in the background). Capitalise
+      // the lowercase class name for display; chip tint follows the class.
+      const el = state.element || '';
+      const element = el
+        ? '<div class="upeg-rarity-box__row">' +
+            '<span class="upeg-rarity-box__k">属性 / Element</span>' +
+            '<span class="upeg-rarity-box__v">' +
+              `<em class="upeg-rarity-box__el upeg-rarity-box__el--${el}">` +
+                `${state.elementEmoji || ''} ${el.charAt(0).toUpperCase() + el.slice(1)}` +
+              '</em>' +
+            '</span></div>'
+        : '';
       html =
         title +
+        element +
         '<div class="upeg-rarity-box__row">' +
           '<span class="upeg-rarity-box__k">OpenRarity</span>' +
           `<span class="upeg-rarity-box__v">#${state.orRank.toLocaleString()}` +
+          // Raw OR score (matches the dashboard's "score x.xxx") — the stable
+          // quantity to cross-check when an integer rank looks off in the
+          // dense mid-pack.
+          `${state.orScore != null ? ` <span class="upeg-rarity-box__score">${state.orScore.toFixed(3)}</span>` : ''}` +
           `${tierEm(state.orTier, 'or')}</span></div>` +
         '<div class="upeg-rarity-box__row">' +
           '<span class="upeg-rarity-box__k">MineRarity</span>' +
           `<span class="upeg-rarity-box__v">#${state.mrRank.toLocaleString()}` +
           `${tierEm('T' + state.mrTier, mtKind || 'mt')}</span></div>` +
+        battle +
         `<div class="upeg-rarity-box__foot">共 ${state.total.toLocaleString()} 只 · ` +
-          'Mine Tier 分 T1–T12,T12 最稀有</div>';
+          'Mine Tier 分 T1–T12,T12 最稀有 · TT=特征撞值/ATK,OR=稀有度/暴击(OR1–OR5,OR5 最稀有),CT=颜色撞值/DEF</div>';
     }
     // Idempotent — only touch the DOM when the content actually changed, so
     // a stable panel never feeds the MutationObserver another scan.
@@ -502,16 +573,36 @@
     if (!traits) {
       renderRarityBox(box, 'pending');
       lastRarityFp = '';
+      pendingRarityFp = '';
       return;
     }
     const colors = readPanelColors();
     const fp = JSON.stringify([traits, colors]);
     if (fp === lastRarityFp) {
-      // Same candidate — repaint the cached result (a panel re-render may
-      // have wiped the box).
+      // Same candidate already scored — repaint the cached result (a panel
+      // re-render may have wiped the box).
       renderRarityBox(box, lastRarityResult || 'loading');
       return;
     }
+    // New/changed panel data. Don't score or show a number yet — gate on
+    // stability first, so a half-updated panel mid-switch (mixed rows) can't
+    // surface a wrong rank. Show 計算中 until the fingerprint has held still.
+    const now = Date.now();
+    if (fp !== pendingRarityFp) {
+      pendingRarityFp = fp;
+      pendingRaritySince = now;
+    }
+    if (now - pendingRaritySince < SETTLE_MS) {
+      renderRarityBox(box, 'loading');
+      // The panel may now go quiet (no more mutations → no more scans), so
+      // schedule the confirming re-check ourselves.
+      clearTimeout(rarityConfirmTimer);
+      rarityConfirmTimer = setTimeout(updateRarityPanel, SETTLE_MS + 50);
+      return;
+    }
+    // Held still for SETTLE_MS — commit this candidate and score it.
+    clearTimeout(rarityConfirmTimer);
+    rarityConfirmTimer = null;
     lastRarityFp = fp;
     lastRarityResult = null;
     renderRarityBox(box, 'loading');
@@ -577,6 +668,7 @@
     if (observer) observer.disconnect();
     clearTimeout(scanTimer);
     clearTimeout(confirmTimer);
+    clearTimeout(rarityConfirmTimer);
     clearStars();
     removeRarityBox();
     if (toggleEl) toggleEl.remove();
@@ -591,8 +683,11 @@
     if (!enabled) return;
     for (const dl of findPartsLists()) applyStars(dl);
     ensureSelection();
-    // updateRarityPanel first: it clears lastRarityResult on a uPEG switch,
-    // so checkAutoDraw never reads a previous uPEG's Mine Tier.
+    // updateRarityPanel first so lastRarityFp/lastRarityResult reflect this
+    // pass before checkAutoDraw reads them. Note it does NOT clear
+    // lastRarityResult on every switch (a partial render where readPanelTraits
+    // returns null leaves the previous result in place) — so checkAutoDraw
+    // must, and does, gate `rar` on lastRarityFp matching the current panel.
     updateRarityPanel();
     checkAutoDraw();
   }
@@ -638,5 +733,5 @@
     characterData: true,
   });
 
-  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.3)');
+  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.8)');
 })();

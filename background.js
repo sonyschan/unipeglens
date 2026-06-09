@@ -183,6 +183,21 @@ const OR_TIERS = [
   [0.10, 'TOP 10%'],
   [0.25, 'TOP 25%'],
 ];
+// Game-side numeric OR tier (1-5) — ported VERBATIM from the unipeg-lens
+// dashboard's openRarityTierNum (js/shared.js). The thresholds mirror
+// OR_TIERS 1:1, so the buckets match the TOP-x% badges exactly:
+//   mythic (top 1%) → OR5, legendary (top 3%) → OR4, epic (top 10%) → OR3,
+//   rare (top 25%) → OR2, untiered (rest) → OR1.  OR5 = rarest.
+// This is the "stat pill" uPEGDuel surfaces alongside MR/TT/CT; in battle
+// it drives the crit roll (critChance(atkOR, defOR) in worker/src/battle.js).
+function orTierNum(rank, total) {
+  if (!rank || !total) return 1;
+  const pct = rank / total;
+  for (let i = 0; i < OR_TIERS.length; i++) {
+    if (pct <= OR_TIERS[i][0]) return 5 - i;
+  }
+  return 1;
+}
 
 // MineRarity part-presence rates (from the on-chain generation params).
 const MR_PART_PRESENCE = {
@@ -335,6 +350,29 @@ function mineRarityProb(item) {
   return p;
 }
 
+// Battle-card stats from the SAME slots that feed mineRarityProb:
+//   TT (特征撞值 → ATK) — largest group of trait slots sharing one id.
+//   CT (颜色撞值 → DEF) — largest group of colour slots painted one hex.
+// Two independent axes; a largest group of 1 = no collision. Derived live
+// from the candidate's own record, so they never touch the cached blob.
+function battleTiers(item) {
+  const m = item.metadata || {};
+  const c = item.colors || {};
+  const tt = [];
+  for (const k of MR_TT_KEYS) if ((m[k] || 0) !== 0) tt.push(m[k]);
+  const ct = [];
+  for (const [key, gate] of MR_CT_SLOTS) {
+    if (gate && (m[gate] || 0) === 0) continue;
+    if (c[key]) ct.push(c[key]);
+  }
+  const shapeT = partitionShape(tt);
+  const shapeC = partitionShape(ct);
+  return {
+    atk: shapeT.length ? shapeT[0] : 0, // TT — largest trait collision
+    def: shapeC.length ? shapeC[0] : 0, // CT — largest colour collision
+  };
+}
+
 // First matching tier label for a percentile (rank / total), else fallback.
 function tierLabel(pct, table, fallback, labelIdx) {
   for (const row of table) if (pct <= row[0]) return row[labelIdx];
@@ -437,6 +475,44 @@ function computeRarity(items) {
   };
 }
 
+// ---------- Card element (TCG combat class) ----------
+//
+// Ported VERBATIM from the unipeg-lens dashboard (js/shared.js
+// COLOR_ELEMENT / hexToElement / ELEMENT_EMOJI). Each uPEG's body hex
+// maps to one of six Pokémon-style classes; this is a fixed lookup over
+// the 34 unique on-chain body hexes, NOT a derived heuristic — so it must
+// stay byte-identical with upstream. Unknown hexes fall back to 'dark'
+// (the neutral catch-all), exactly as upstream does. Element needs no
+// collection data — it rides along in the scoreCandidate response.
+const COLOR_ELEMENT = {
+  // 🔥 fire — warm reds/oranges/coral/peach
+  '#ac3232': 'fire', '#d95763': 'fire', '#df7126': 'fire',
+  '#e76232': 'fire', '#e79090': 'fire', '#edb187': 'fire',
+  // 💧 water — blues + cyans (covers both palette dupes via #cbdbfc, #306082)
+  '#306082': 'water', '#9dcde4': 'water', '#5fcde4': 'water',
+  '#cbdbfc': 'water', '#cee6f3': 'water', '#b3dcf7': 'water',
+  // 🌲 forest — greens + earth/wood browns
+  '#37946e': 'forest', '#4b8b3b': 'forest', '#7fc97f': 'forest',
+  '#524b24': 'forest', '#323c39': 'forest', '#8f563b': 'forest',
+  '#d9a066': 'forest', '#d2ac8d': 'forest',
+  // ⚡ lightning — bright yellow + neon mint
+  '#e7d632': 'lightning', '#fcf893': 'lightning', '#00ffd0': 'lightning',
+  // ☀️ holy — pale neutral light, cream, lavender-gray
+  '#eae1b5': 'holy', '#a9b6d2': 'holy', '#a0a0a0': 'holy',
+  // 🌑 dark — blacks, deep purples, mid/dark grays (metal folded in)
+  '#1e1e26': 'dark', '#2d1b1b': 'dark', '#6e3e54': 'dark',
+  '#cb67d2': 'dark', '#d77bba': 'dark',
+  '#847e87': 'dark', '#626979': 'dark', '#696a6a': 'dark',
+};
+const ELEMENT_EMOJI = {
+  fire: '🔥', water: '💧', forest: '🌲',
+  lightning: '⚡', holy: '☀️', dark: '🌑',
+};
+function hexToElement(hex) {
+  if (!hex) return 'dark';
+  return COLOR_ELEMENT[String(hex).toLowerCase()] || 'dark';
+}
+
 // Score one draw-panel candidate against a cached collection distribution.
 //   traits : { traitKey: index }   — all 7 trait slots (0 = absent)
 //   colors : { colorKey: hex }     — gated-off colours simply omitted
@@ -476,12 +552,22 @@ function scoreCandidate(rarity, traits, colors) {
     else break;
   }
   const mtRow = tierRow(mrRank / total, MR_TIERS);
+  const bt = battleTiers(item);
+  // Element is a fixed body-hex lookup (no collection data needed); it
+  // rides along here so the draw panel can show the card's combat class.
+  const element = hexToElement(c.bodyColor);
   return {
     orRank,
+    orScore, // raw normalised OpenRarity score (matches lens "score x.xxx")
     orTier: tierLabel(orRank / total, OR_TIERS, '', 1),
+    orStat: orTierNum(orRank, total), // OR 1-5 stat pill (uPEGDuel scale, 5 = rarest)
     mrRank,
     mrTier: mtRow[1], // Mine Tier — a 1-12 bucket of MineRarity (12 = rarest)
     mrTierLabel: mtRow[2], // UR/SSR/SR/R band — drives the chip colour
+    ttMax: bt.atk, // TT 特征撞值 (ATK) — largest trait collision group
+    ctMax: bt.def, // CT 颜色撞值 (DEF) — largest colour collision group
+    element, // TCG combat class derived from body hex (fire/water/…/dark)
+    elementEmoji: ELEMENT_EMOJI[element] || '', // upstream's per-class glyph
     total,
   };
 }

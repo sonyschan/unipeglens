@@ -119,6 +119,14 @@
   font-weight: 700;
   letter-spacing: 0.01em;
 }
+/* raw OR score, shown next to the rank as a stable cross-check */
+.upeg-rarity-box__score {
+  font-size: 10.5px;
+  font-weight: 600;
+  opacity: 0.5;
+  margin-left: 5px;
+  vertical-align: middle;
+}
 .upeg-rarity-box__tier {
   font-style: normal;
   font-size: 9.5px;
@@ -136,6 +144,38 @@
 .upeg-rarity-box__tier--ssr { background: #a855f7; color: #faf5ff; }
 .upeg-rarity-box__tier--sr  { background: #3b82f6; color: #eff6ff; }
 .upeg-rarity-box__tier--r   { background: #10b981; color: #03281d; }
+/* battle-card collision badges: TT (ATK) / CT (DEF) */
+.upeg-rarity-box__bt {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.upeg-rarity-box__bt--atk { background: #7f1d1d; color: #ffe4e4; } /* TT 攻击 */
+.upeg-rarity-box__bt--or  { background: #5b21b6; color: #ede9fe; } /* OR 稀有度/暴击 */
+.upeg-rarity-box__bt--def { background: #1e3a8a; color: #e0ecff; } /* CT 防御 */
+/* element (TCG class) chip — one tint per upstream COLOR_ELEMENT bucket */
+.upeg-rarity-box__el {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  vertical-align: middle;
+  background: #3a3a46;
+  color: #e9e9ec;
+}
+.upeg-rarity-box__el--fire      { background: #7f1d1d; color: #ffe1dc; }
+.upeg-rarity-box__el--water     { background: #1e3a8a; color: #dce9ff; }
+.upeg-rarity-box__el--forest    { background: #14532d; color: #d6f5e0; }
+.upeg-rarity-box__el--lightning { background: #854d0e; color: #fff1cc; }
+.upeg-rarity-box__el--holy      { background: #b9a14e; color: #251c05; }
+.upeg-rarity-box__el--dark      { background: #3a2f44; color: #e7ddf2; }
 .upeg-rarity-box__foot {
   margin-top: 6px;
   font-size: 9.5px;
