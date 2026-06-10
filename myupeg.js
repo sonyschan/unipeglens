@@ -29,12 +29,11 @@
   // ----- auto-draw thresholds -----
   const PART_COUNT = 7;       // a fully rendered 部件 panel has 7 rows
   const PARTS_REPEAT = 5;     // fire alone when 5+ parts share one number
-  const COLOR_REPEAT = 4;     // fire alone when 4+ colors share one hexcode
+  const COLOR_REPEAT = 2;     // #4 — colour stack: 2+ colors share one hexcode
   const AUTODRAW_MT_TIER = 12; // fire alone when the uPEG hits Mine Tier 12
   const AUTODRAW_RANK_LIMIT = 30; // #2 — OR & MR rank gate (both ranks ≤ this)
-  const AUTODRAW_COLOR_OR_LIMIT = 180; // #4 — OR gate paired with 4+ colour stack (≤)
-  const AUTODRAW_COLOR_TT_MIN = 3; // #4 — also require 3+ parts sharing one number (TT)
-  const AUTODRAW_COLOR_ELEMENT = 'lightning'; // #4 — also require the card's element be ⚡lightning
+  const AUTODRAW_COLOR_OR_LIMIT = 60; // #4 — OR gate paired with the colour+parts stack (≤)
+  const AUTODRAW_COLOR_TT_MIN = 4; // #4 — also require 4+ parts sharing one number (TT)
   // #5 — parts-led stack: 3+ colour stack AND 4+ parts (TT) AND OR ≤ 180.
   // No element or MR gate (looser on colour/element than #4, stricter on TT).
   const AUTODRAW_C5_COLOR_MIN = 3;  // #5 — 3+ colours sharing one hexcode
@@ -246,18 +245,16 @@
     } else if (
       colorRepeat >= COLOR_REPEAT &&
       partsRepeat >= AUTODRAW_COLOR_TT_MIN &&
-      rar && rar.orRank <= AUTODRAW_COLOR_OR_LIMIT &&
-      rar.element === AUTODRAW_COLOR_ELEMENT
+      rar && rar.orRank <= AUTODRAW_COLOR_OR_LIMIT
     ) {
-      // Colour stack AND a parts stack AND a top-OR uPEG AND the ⚡lightning
-      // element — empirically the sweet spot for surfacing "great" uPEGs
-      // (user-calibrated against owned uPEGs). Colour repetition alone isn't
-      // selective enough; pairing it with a 3+ parts (TT) stack, the tight
-      // OR ≤ 180 gate, and the lightning-only element gate keeps it focused.
+      // Colour stack AND a strong parts stack AND a very-top-OR uPEG — the
+      // tight OR ≤ 60 gate plus the 4+ parts (TT) stack carry the selectivity,
+      // so the colour bar only needs 2+ and any element qualifies (the
+      // lightning-only gate was dropped per user calibration).
       reason =
         '颜色 ' + COLOR_REPEAT + '+ 个相同 hexcode 且 部件 ' +
         AUTODRAW_COLOR_TT_MIN + '+ 个相同数字 且 OR ≤ ' +
-        AUTODRAW_COLOR_OR_LIMIT + ' 且 属性=⚡' + AUTODRAW_COLOR_ELEMENT +
+        AUTODRAW_COLOR_OR_LIMIT +
         '（OR #' + rar.orRank + ' / TT ' + partsRepeat + '）';
     } else if (
       colorRepeat >= AUTODRAW_C5_COLOR_MIN &&
