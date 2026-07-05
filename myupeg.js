@@ -1,4 +1,4 @@
-// Unipeg Lens — myupeg.art trait highlighter + opt-in auto-draw.
+// upeg-hunter — myupeg.art trait highlighter + opt-in auto-draw.
 //
 // On myupeg.art the "抽取" panel lists the selected uPEG's 部件 (parts)
 // and 颜色 (colors). This script:
@@ -121,7 +121,7 @@
     if (cards.some(isCandidateSelected)) return;
     if (Date.now() - lastSelectClick < SELECT_COOLDOWN_MS) return;
     lastSelectClick = Date.now();
-    console.log('[Unipeg Lens] section 02 had no selection — selecting first uPEG');
+    console.log('[upeg-hunter] section 02 had no selection — selecting first uPEG');
     cards[0].click();
   }
 
@@ -327,12 +327,12 @@
     // driven by the click can never trigger a second draw.
     armed = false;
     if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') {
-      console.warn('[Unipeg Lens] auto-draw matched (' + reason + ') — 抽取 button disabled, skipped');
+      console.warn('[upeg-hunter] auto-draw matched (' + reason + ') — 抽取 button disabled, skipped');
       autodrawResult = 'unavailable';
       updateToggleUI();
       return;
     }
-    console.log('[Unipeg Lens] auto-draw FIRED — ' + reason);
+    console.log('[upeg-hunter] auto-draw FIRED — ' + reason);
     autodrawResult = 'fired';
     updateToggleUI();
     btn.click();
@@ -610,7 +610,7 @@
           if (!extensionAlive()) return;
           if (chrome.runtime.lastError) {
             console.warn(
-              '[Unipeg Lens] scoreCandidate message failed:',
+              '[upeg-hunter] scoreCandidate message failed:',
               chrome.runtime.lastError.message
             );
             return;
@@ -621,7 +621,7 @@
           } else {
             lastRarityResult = 'unavailable';
             console.warn(
-              '[Unipeg Lens] rarity not ready:',
+              '[upeg-hunter] rarity not ready:',
               (resp && resp.error) || '(no response)'
             );
           }
@@ -658,7 +658,7 @@
     // a stale content script; keep it out of the chrome://extensions Errors
     // panel. It still prints to the page console for debugging.
     console.log(
-      '[Unipeg Lens] extension context invalidated — myupeg.js stopping; reload the tab'
+      '[upeg-hunter] extension context invalidated — myupeg.js stopping; reload the tab'
     );
     enabled = false;
     armed = false;
@@ -698,7 +698,7 @@
     scanTimer = setTimeout(scan, 200);
   }
 
-  // Honour the toolbar on/off toggle, same as the unipeg.art content script.
+  // Honour the toolbar on/off toggle.
   chrome.storage?.onChanged?.addListener((changes, area) => {
     if (area !== 'local') return;
     if (changes.enabled) {
@@ -730,5 +730,5 @@
     characterData: true,
   });
 
-  console.log('[Unipeg Lens] myupeg.art content script active (v1.3.8)');
+  console.log('[upeg-hunter] myupeg.art content script active');
 })();

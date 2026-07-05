@@ -8,47 +8,21 @@
     <header class="head">
       <img src="icons/icon-48.png" alt="" class="head__icon" width="32" height="32" />
       <div class="head__text">
-        <div class="head__name">Unipeg Lens</div>
-        <div class="head__sub">p2peg + OpenSea listings on unipeg.art</div>
+        <div class="head__name">upeg-hunter</div>
+        <div class="head__sub">OpenRarity / MineRarity + auto-draw on myupeg.art</div>
       </div>
     </header>
 
     <section class="row">
       <div>
         <div class="row__label">Enabled</div>
-        <div class="row__hint" id="status">Showing badges</div>
+        <div class="row__hint" id="status">Active on myupeg.art</div>
       </div>
       <label class="switch">
         <input type="checkbox" id="toggle" />
         <span class="switch__track"><span class="switch__thumb"></span></span>
       </label>
     </section>
-
-    <details class="settings" id="settings">
-      <summary class="settings__summary">
-        <span class="settings__title">OpenSea API key</span>
-        <span class="settings__state" id="key-state">auto-managed</span>
-      </summary>
-      <div class="settings__body">
-        <input
-          type="text"
-          id="key-input"
-          class="settings__input"
-          placeholder="Paste your OpenSea API key"
-          spellcheck="false"
-          autocomplete="off"
-        />
-        <div class="settings__actions">
-          <button type="button" id="key-save" class="btn btn--primary">Save</button>
-          <button type="button" id="key-clear" class="btn">Clear</button>
-        </div>
-        <p class="settings__hint">
-          Optional. Without a key the extension auto-fetches a free agent key with low limits.
-          Get your own (free, higher limits) at
-          <a href="https://docs.opensea.io/reference/api-keys" target="_blank" rel="noopener noreferrer">OpenSea Developer</a>.
-        </p>
-      </div>
-    </details>
 
     <footer class="foot">
       <span class="foot__version">v<span id="version">1.0.0</span></span>

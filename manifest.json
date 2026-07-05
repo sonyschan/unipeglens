@@ -1,14 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Unipeg Lens",
-  "version": "1.3.9",
-  "description": "Show p2peg/OpenSea listings on unipeg.art; star traits and show OpenRarity/MineRarity ranks on myupeg.art.",
+  "name": "upeg-hunter",
+  "version": "2.0.0",
+  "description": "Star traits and show OpenRarity/MineRarity ranks on myupeg.art, with opt-in auto-draw.",
   "permissions": ["alarms", "storage"],
   "host_permissions": [
-    "https://server.p2peg.app/*",
-    "https://unipeg.art/*",
     "https://server.unipeg.art/*",
-    "https://api.opensea.io/*",
     "https://unipeg-lens.sonys-chan.workers.dev/*"
   ],
   "background": {
@@ -17,12 +14,6 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://unipeg.art/explore*"],
-      "js": ["content.js"],
-      "css": ["styles.css"],
-      "run_at": "document_idle"
-    },
-    {
       "matches": ["https://myupeg.art/*", "https://*.myupeg.art/*"],
       "js": ["myupeg.js"],
       "css": ["myupeg.css"],
@@ -30,7 +21,7 @@
     }
   ],
   "action": {
-    "default_title": "Unipeg Lens",
+    "default_title": "upeg-hunter",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

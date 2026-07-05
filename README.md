@@ -1,112 +1,84 @@
 <img width="1326" height="1308" alt="image" src="https://github.com/user-attachments/assets/5a950c05-d1bc-4667-8bcd-5ce532aabefd" />
 
-# Unipeg Lens
+# upeg-hunter
 
-A Chrome extension that brings [p2peg.app](https://p2peg.app/collections/unipeg) and [OpenSea](https://opensea.io/collection/unipegv4) listings into the [unipeg.art](https://unipeg.art/explore) gallery — letting you browse, filter, and discover offers directly while exploring the artwork.
+**English** · [简体中文](#简体中文)
 
-## Why
+A Chrome extension for the [myupeg.art](https://myupeg.art/) draw (`抽取`) panel. It estimates a candidate uPEG's **OpenRarity** and **MineRarity** rank before you spend ETH, stars the traits you're hunting, and can auto-click `抽取` when a roll matches your thresholds.
 
-The OTC market on [p2peg.app](https://p2peg.app/collections/unipeg) currently has no way to filter by attribute sets such as **fullSpectrum** or other curated collections. To check whether a uPEG you like on [unipeg.art](https://unipeg.art/explore?filter=fullSpectrum) is for sale, you have to copy its ID, switch tabs, paste it into the marketplace's search box, and check manually — one at a time.
+## Install
 
-Now that uPEGs can also be wrapped and listed on **OpenSea**, the problem is split across two marketplaces.
+1. Download the source — either clone it:
+   ```bash
+   git clone https://github.com/sonyschan/unipeglens.git
+   ```
+   or grab the ZIP from the [GitHub page](https://github.com/sonyschan/unipeglens) (**Code → Download ZIP**) and unzip it somewhere permanent (don't delete the folder — Chrome loads from this path).
+2. Open `chrome://extensions`.
+3. Turn on **Developer mode** (top-right).
+4. Click **Load unpacked** (top-left) and select the folder.
 
-This extension closes that loop: while browsing the unipeg.art gallery (with any filter applied, including fullSpectrum), every uPEG that has an open ETH listing on either marketplace is marked with a color-coded price badge. One click opens a details panel with the seller, rarity, and a direct link to buy from whichever marketplace it's on.
+The upeg-hunter icon (a pixel unicorn with a magnifier) appears in your toolbar.
 
-## Features
+## How to use
 
-- 💰 **Price badge** on every listed uPEG card in `unipeg.art/explore`
-  - **Pink** = listed on p2peg
-  - **Blue** = listed on OpenSea
-- 🔀 **Source filter popover** — toggle p2peg / OpenSea independently from the floating chip
-- 🔍 **"Listings only" filter** to instantly hide everything that isn't for sale
-- 📋 **Details modal** with seller, source, rarity ranks, listing ID, and bundle info
-- 🔗 **One-click deep link** straight to the trade page on p2peg or OpenSea
-- 🔄 **Auto-refresh** every 30 seconds — new listings appear without reloading
-- 🎚 **Toolbar toggle** to disable the extension instantly without uninstalling
-- 🏆 **OpenRarity + MineRarity rank on `myupeg.art`** — the `抽取` panel shows the candidate uPEG's estimated OR / MR rank and tier before you spend ETH
-- ⭐ **Trait highlighter on `myupeg.art`** — in the `抽取` panel, each part matching your wanted profile gets a star (⭐) prefix
-- 🎯 **Auto-draw on `myupeg.art`** (opt-in) — arm a floating toggle and it auto-clicks `抽取` when a uPEG hits your number/color thresholds or lands in **Mine Tier 12**
+1. Go to [myupeg.art](https://myupeg.art/) and open the `抽取` panel.
+2. **Read the rank box** above the `抽取` button — it shows the candidate's estimated **OpenRarity** and **MineRarity** rank and tier, updating live as you switch uPEGs or the seed changes. (First run downloads ~10 MB of collection data; the box says `计算中` until it's ready.)
+3. **Watch the stars** — parts matching your wanted profile get a ⭐ (`头发`/`尾巴` = 无, `犄角`/`翅膀`/`饰品` = 有值).
+4. **Auto-draw (optional)** — click the floating **AUTO-DRAW** toggle to arm it. When a uPEG hits your thresholds (or Mine Tier 12, or tops both rarity ranks) it clicks `抽取` for you. ⚠️ This spends real ETH and burns a uPEG. It's off by default, must be armed each session, and disarms itself after one draw.
+5. **Toggle on/off** — click the toolbar icon any time to enable or disable the extension.
 
-## Installation (Chrome)
+Everything runs locally in your browser — no accounts, no tracking, only public data is fetched.
 
-The extension is not yet on the Chrome Web Store, so it needs to be installed manually as an unpacked extension.
+---
 
-### 1. Download the source
+## 简体中文
 
-Either clone the repo:
+[English](#upeg-hunter) · **简体中文**
 
-```bash
-git clone https://github.com/sonyschan/unipeglens.git
-```
+一个用于 [myupeg.art](https://myupeg.art/) `抽取` 面板的 Chrome 扩展。它会在你花费 ETH 之前，估算候选 uPEG 的 **OpenRarity** 与 **MineRarity** 排名，为你想要的部件加星标，并可在符合条件时自动点击 `抽取`。
 
-Or download the ZIP from the [GitHub page](https://github.com/sonyschan/unipeglens) (green **Code** button → **Download ZIP**) and unzip it somewhere permanent (don't delete the folder later — Chrome loads files from this path).
+### 安装
 
-### 2. Open the extensions page
+1. 下载源码——可以克隆仓库：
+   ```bash
+   git clone https://github.com/sonyschan/unipeglens.git
+   ```
+   或从 [GitHub 页面](https://github.com/sonyschan/unipeglens)（**Code → Download ZIP**）下载 ZIP，解压到一个固定的位置（不要之后删除这个文件夹——Chrome 会从该路径加载）。
+2. 打开 `chrome://extensions`。
+3. 打开右上角的 **开发者模式（Developer mode）**。
+4. 点击左上角的 **加载已解压的扩展程序（Load unpacked）**，选择该文件夹。
 
-In Chrome, go to:
+工具栏会出现 upeg-hunter 图标（带放大镜的像素独角兽）。
 
-```
-chrome://extensions
-```
+### 使用方法
 
-### 3. Enable Developer mode
+1. 打开 [myupeg.art](https://myupeg.art/) 并进入 `抽取` 面板。
+2. **查看排名框**——它位于 `抽取` 按钮上方，显示候选 uPEG 的 **OpenRarity** 与 **MineRarity** 预估排名和等级，会随着切换 uPEG 或种子变化而实时更新。（首次运行需下载约 10 MB 的藏品数据，在准备好之前会显示 `计算中`。）
+3. **留意星标**——符合你目标条件的部件会显示 ⭐（`头发`/`尾巴` = 无，`犄角`/`翅膀`/`饰品` = 有值）。
+4. **自动抽取（可选）**——点击浮动的 **AUTO-DRAW** 开关即可武装。当 uPEG 命中你的条件（或达到 Mine Tier 12，或同时位居两项稀有度排名前列）时，它会替你点击 `抽取`。⚠️ 这会花费真实 ETH 并消耗一只 uPEG。默认关闭，每次会话都需手动武装，且抽取一次后自动解除武装。
+5. **开启 / 关闭**——随时点击工具栏图标即可启用或停用扩展。
 
-Toggle the **Developer mode** switch in the top-right corner.
+所有计算都在你的浏览器本地进行——无需账号、不做追踪，只获取公开数据。
 
-### 4. Load the extension
-
-Click **Load unpacked** in the top-left, then select the `unipeglens` folder you downloaded.
-
-The Unipeg Lens icon (a pixel unicorn with a magnifier) will appear in your Chrome toolbar.
-
-### 5. Use it
-
-Visit [https://unipeg.art/explore](https://unipeg.art/explore) — colored price badges appear on every uPEG that's currently listed (pink for p2peg, blue for OpenSea). Click a badge to see details and jump straight to the trade page.
-
-Click the toolbar icon to toggle the extension on/off, and click the floating chip in the bottom-right corner of the gallery to filter by source.
-
-## OpenSea API key (optional)
-
-OpenSea's API requires a key for every request. To keep things friction-free, the extension automatically requests a free **agent-tier** key on first run (no signup, no wallet) and renews it automatically before it expires.
-
-That free key works fine for casual browsing, but it has lower rate limits and is shared across all users who didn't supply their own. If you browse heavily, **bring your own key** for higher limits:
-
-1. Go to [OpenSea Developer → API keys](https://docs.opensea.io/reference/api-keys) and follow the instructions to get a free key (requires an OpenSea account).
-2. Click the extension's toolbar icon → expand **OpenSea API key** → paste your key → **Save**.
-3. The extension will use your key from then on. You can clear it any time to fall back to the auto-managed key.
-
-The key is stored only in your browser via `chrome.storage.local`. It is never sent anywhere except to `api.opensea.io`.
-
-## How it works
-
-- **Background service worker** polls both `server.p2peg.app/listings` and `api.opensea.io/v2/listings/collection/unipegv4/all` every 30 seconds and builds an in-memory index keyed by display ID.
-- **Content script** scans `unipeg.art/explore` for `.upeg-card` elements, looks up their display ID against the index, and paints a source-colored badge on matches.
-- **Rarity scoring** runs locally: the background worker pulls a full collection-metadata mirror and builds the **OpenRarity** (entropy information-content) and **MineRarity** (kernel-K probability) score distribution, refreshed when the collection grows or the cache passes 6 hours. On `myupeg.art` the content script reads the `抽取` panel's traits and asks the background to rank that candidate against the distribution.
-- **Popup** controls extension on/off plus the OpenSea API key. **Floating chip** controls source filter and listings-only mode.
-
-No accounts, no tracking, no remote code — everything runs locally in your browser; only public data files are fetched.
+---
 
 ## Changelog
 
 Only the three most recent **major or minor** releases are kept here (patches omitted). See [GitHub commits](https://github.com/sonyschan/unipeglens/commits/main) for full history.
 
+### v2.0
+- Renamed to **upeg-hunter** and narrowed to `myupeg.art` only.
+- Removed the `unipeg.art/explore` listing monitor and display (p2peg + OpenSea price badges, source filter, listings-only filter, details modal, OpenSea API-key management).
+- The OpenRarity / MineRarity rank estimate, trait highlighter, and opt-in auto-draw on `myupeg.art` are unchanged — the rarity numbers are identical to before.
+
 ### v1.3
-- New: on `myupeg.art`, the `抽取` (draw) panel shows the candidate uPEG's **estimated OpenRarity and MineRarity rank** — judge how rare a roll would be before spending ETH.
+- New: on `myupeg.art`, the `抽取` panel shows the candidate uPEG's **estimated OpenRarity and MineRarity rank** — judge how rare a roll would be before spending ETH.
 - Ranks update live as you switch uPEGs or the seed changes; OpenRarity shows its percentile tier (TOP 1% / 3% / 10% / 25%) and MineRarity its **Mine Tier** (T1–T12, T12 rarest).
-- Opt-in auto-draw gained a trigger: it also fires when the shown uPEG lands in **Mine Tier 12** (the rarest tier).
-- Scoring runs locally: the background worker pulls a full collection-metadata mirror, builds the score distribution, and refreshes it when the collection grows or the cache passes 6 hours.
+- Opt-in auto-draw also fires when the shown uPEG lands in **Mine Tier 12** (the rarest tier).
 
 ### v1.2
-- New: on `myupeg.art`, the `抽取` panel's `部件` traits are scanned and a ⭐ is shown before each part matching a wanted profile (`头发`/`尾巴` = 无, `犄角`/`翅膀`/`饰品` = 有值).
-- Each part is judged independently, so partial matches stay visible while you pick a uPEG.
-- New: opt-in **auto-draw** — arm the floating toggle on `myupeg.art` and it clicks `抽取` for you once the shown uPEG has 5+ parts sharing a number or 4+ colors sharing a hexcode. One-shot; disarms after firing.
-- The candidate grid keeps itself fed: when no uPEG is selected (e.g. after a refresh drops the selection), the first candidate is selected automatically so the detail panel stays populated.
-
-### v1.1
-- Added OpenSea as a second listing source. Listings from `unipegv4` are merged into the same index as p2peg, keyed by display ID.
-- Per-source price badges: **pink** for p2peg, **blue** for OpenSea. Modal "Buy" deep-links to the matching marketplace.
-- Floating chip became a popover with independent source toggles plus the existing "Listings only" filter.
-- Popup gained an optional **OpenSea API key** field; without one, the extension auto-mints and rotates a free agent-tier key.
+- New: on `myupeg.art`, the `抽取` panel's `部件` traits are scanned and a ⭐ is shown before each part matching a wanted profile.
+- New: opt-in **auto-draw** — arm the floating toggle and it clicks `抽取` once the shown uPEG has 5+ parts sharing a number or 4+ colors sharing a hexcode. One-shot; disarms after firing.
 
 ## Contact
 
