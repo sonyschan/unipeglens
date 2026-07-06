@@ -1,3 +1,5 @@
+<img width="932" height="527" alt="image" src="https://github.com/user-attachments/assets/2416e550-8bcd-48ce-950b-15f7551ca24a" />
+
 # upeg-hunter
 
 **English** · [简体中文](#简体中文)
