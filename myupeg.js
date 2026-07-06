@@ -49,6 +49,13 @@
 
   let scanTimer = null;
   let enabled = true;
+  // Auto-draw is gated behind a local opt-in flag (chrome.storage.local
+  // `autodraw`). It stays dormant — the floating toggle never mounts and no
+  // ETH is ever spent — unless that flag is explicitly set to true on this
+  // machine, so a default (public) install only gets the rarity box + stars.
+  // The logic below is intentionally left in the source; enable it yourself
+  // if you understand and accept that auto-draw spends real ETH.
+  let autodrawUnlocked = false;
   let armed = false;       // session-only — never persisted across reloads
   let autodrawResult = ''; // '', 'fired', 'unavailable'
   let toggleEl = null;
@@ -59,8 +66,9 @@
 
   const ready = (async () => {
     try {
-      const r = await chrome.storage.local.get('enabled');
+      const r = await chrome.storage.local.get(['enabled', 'autodraw']);
       enabled = r.enabled !== false;
+      autodrawUnlocked = r.autodraw === true;
     } catch {}
   })();
 
@@ -279,7 +287,7 @@
   }
 
   function checkAutoDraw() {
-    if (!enabled || !armed) {
+    if (!autodrawUnlocked || !enabled || !armed) {
       pendingDraw = null;
       return;
     }
@@ -340,6 +348,7 @@
 
   // ---------- the floating arm toggle ----------
   function mountToggle() {
+    if (!autodrawUnlocked) return; // dormant unless locally unlocked
     if (toggleEl) return;
     toggleEl = document.createElement('button');
     toggleEl.className = 'upeg-autodraw';
@@ -709,6 +718,16 @@
       else {
         clearStars();
         removeRarityBox();
+      }
+    }
+    // Local auto-draw opt-in flipped — mount/unmount the floating toggle live.
+    if (changes.autodraw) {
+      autodrawUnlocked = changes.autodraw.newValue === true;
+      if (autodrawUnlocked) {
+        mountToggle();
+      } else {
+        armed = false;
+        if (toggleEl) { toggleEl.remove(); toggleEl = null; }
       }
     }
     // The background just (re)scored the collection — re-rank the candidate.
